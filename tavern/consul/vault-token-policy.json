@@ -1,0 +1,5 @@
+{
+"Name": "Vault Token", 
+"Type": "client", 
+"Rules": "node \"\" {{ policy = \"write\" }} service \"vault\" {{ policy = \"write\" }} agent \"\" {{ policy = \"write\" }} key \"vault\" {{ policy = \"write\" }}  session \"\" {{ policy = \"write\" }} "
+}

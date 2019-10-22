@@ -1,0 +1,5 @@
+{
+"Name": "Agent Token",
+"Type": "client",
+"Rules": "node \"\" {{ policy = \"write\" }}  service \"\" {{ policy = \"read\" }}"
+}

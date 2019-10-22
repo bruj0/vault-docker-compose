@@ -1,0 +1,54 @@
+---
+test_name: 01-Create roles
+stages:
+
+  - name: 02-Create consul server certificate
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/pki/issue/dc1-consul"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        common_name: "server.dc1.consul"
+        ttl": "720h"
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: myutils:save_response
+          extra_kwargs:
+            filenane: server-dc1-consul.json
+
+
+  - name: 02-Create consul agent certificate
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/pki/issue/dc1-consul"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        common_name: "agent.dc1.consul"
+        ttl": "720h"
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: myutils:save_response
+          extra_kwargs:
+            filename: agent-dc1-consul.json
+  - name: 02-Create consul cli certificate
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/pki/issue/dc1-consul"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        common_name: "cli.dc1.consul"
+        ttl": "720h"
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: myutils:save_response
+          extra_kwargs:
+            filename: cli-dc1-consul.json

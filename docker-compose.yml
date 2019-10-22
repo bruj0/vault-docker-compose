@@ -1,0 +1,101 @@
+version: '3'
+networks:
+  internal:
+
+services:
+  consul-agent-1: &consul-agent
+    image: consul:1.6.1
+    container_name: consul-agent-1
+    networks:
+      - internal
+    command: "agent -retry-join consul-server-bootstrap -client 0.0.0.0"
+    volumes:
+        - ./consul/config:/consul/config
+        
+  consul-agent-2:
+    container_name: consul-agent-2
+    <<: *consul-agent
+
+  consul-agent-3:
+    container_name: consul-agent-3
+    <<: *consul-agent
+
+  consul-server-1: &consul-server
+    <<: *consul-agent
+    container_name: consul-server-1
+    command: "agent -server -retry-join consul-server-bootstrap -client 0.0.0.0"
+    volumes:
+        - ./consul/config:/consul/config
+        - ./consul/data/consul01:/consul/data
+
+  consul-server-2:
+    <<: *consul-server
+    container_name: consul-server-2
+    volumes:
+        - ./consul/config:/consul/config
+        - ./consul/data/consul02:/consul/data
+
+  consul-server-bootstrap:
+    <<: *consul-agent
+    container_name: consul-server-bootstrap
+    ports:
+      - "8400:8400"
+      - "8500:8500"
+      - "8600:8600"
+      - "8600:8600/udp"
+    command: "agent -server -bootstrap-expect 3 -ui -client 0.0.0.0"
+    volumes:
+        - ./consul/config:/consul/config
+        - ./consul/data/consul03:/consul/data
+
+## VAULT cluster configuration
+  vault01: &vault-server
+    container_name: vault01
+    image: vault:1.2.3
+    networks:
+      - internal    
+    ports:
+      - 9201:8200
+    volumes:
+      - ./vault/config:/vault/config
+      - ./vault/logs/vault01:/vault/logs
+    environment:
+      #- VAULT_CLUSTER_INTERFACE=eth0
+      #- VAULT_REDIRECT_INTERFACE=eth0
+      #- VAULT_API_ADDR=http://0.0.0.0:8200
+      - VAULT_LOG_LEVEL=trace
+    command: vault server -config=/vault/config/vault01.hcl
+    cap_add:
+      - IPC_LOCK
+    depends_on:
+      - consul-agent-1
+  
+  vault02:
+    <<: *vault-server
+    container_name: vault02
+    image: vault:1.2.3
+    networks:
+      - internal    
+    ports:
+      - 9202:8200
+    volumes:
+      - ./vault/config:/vault/config/
+      - ./vault/logs/vault02:/vault/logs
+    depends_on:
+      - consul-agent-2
+    command: vault server -config=/vault/config/vault02.hcl
+      
+  vault03:
+    <<: *vault-server
+    container_name: vault03
+    image: vault:1.2.3
+    networks:
+      - internal    
+    ports:
+      - 9203:8200
+    volumes:
+      - ./vault/config:/vault/config
+      - ./vault/logs/vault02:/vault/logs
+    depends_on:
+      - consul-agent-3   
+    command: vault server -config=/vault/config/vault03.hcl 

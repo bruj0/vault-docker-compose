@@ -1,0 +1,55 @@
+---
+test_name: 01-Generate bootstraping token
+stages:
+  - name: 01-Generate bootstraping token
+    request:
+      url: "{tavern.env_vars.CONSUL_ADDR}/v1/acl/bootstrap"
+      method: PUT
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: myutils:save_response
+          extra_kwargs:
+            filename: consul-admin-token.json
+        body:
+          admin_token: SecretID
+
+---
+test_name: 02-Generate the Consul ACL agent token
+stages:
+  - name: 02-Generate the Consul ACL agent token
+    request:
+      url: "{tavern.env_vars.CONSUL_ADDR}/v1/acl/create"
+      method: PUT
+      headers:
+        X-Consul-Token: "{tavern.env_vars.CONSUL_TOKEN}" #"{admin_token}" 
+      json: !include consul-admin-token.json
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: myutils:save_response
+          extra_kwargs:
+            filename: consul-agent-token.json
+        body:
+          client-token: ID        
+---
+test_name: 03-Generate the Vault ACL agent token
+stages:
+  - name: 03-Generate the Vault ACL agent token
+    request:
+      url: "{tavern.env_vars.CONSUL_ADDR}/v1/acl/create"
+      method: PUT
+      headers:
+        X-Consul-Token: "{tavern.env_vars.CONSUL_TOKEN}" #"{admin_token}" 
+      json: !include vault-token-policy.json
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: myutils:save_response
+          extra_kwargs:
+            filename: vault-consul-token.json
+        body:
+          vault-token: ID        

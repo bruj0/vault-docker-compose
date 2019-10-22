@@ -1,0 +1,7 @@
+.vagrant
+*~
+data/
+.pytest_cache
+__pycache__
+.vscode
+
