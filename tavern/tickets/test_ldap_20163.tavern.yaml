@@ -1,0 +1,76 @@
+---
+test_name: 01-Enable ldap
+stages:
+
+  - name: 01-Enable ldap
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/sys/auth/ldap"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        type: "ldap"
+
+    response:
+      status_code: 204
+---
+test_name: 02-Configure ldap
+stages:
+
+  - name: 02-Configure ldap
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/auth/ldap/config"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        url: "ldap://52.165.39.214:389"
+        userdn: "CN=Users,DC=example,DC=com"
+        discoverdn: false
+        deny_null_bind:  true
+        userattr:  "sAMAccountName"
+#        upndomain: "example.com"
+#        upndomain: ""
+        binddn: "CN=ldap-user,CN=Users,DC=example,DC=com"
+        bindpass: "!4dt3st32255"
+        groupfilter: "(&(objectClass=group)(member:1.2.840.113556.1.4.1941:={{.UserDN}}))"
+        groupattr: "memberOf"
+        groupdn: "OU=MyGroups,DC=example,DC=com"
+        use_token_groups : true
+        case_sensitive_names : true
+    response:
+      status_code: 204
+
+---
+test_name: 03-Create mysecret policy
+stages:
+
+  - name: 03-Associate group
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/sys/policy/mysecrets"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        policy: "path \"secret/*\"\n{{\n  capabilities = [\"create\", \"read\", \"update\", \"delete\", \"list\", \"sudo\"]\n}}"
+    response:
+      status_code: 204
+
+---
+test_name: 04-Associate group
+stages:
+
+  - name: 04-Associate group
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/auth/ldap/groups/TestUsers"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        policies: "mysecrets"
+
+    response:
+      status_code: 204
+
+
+

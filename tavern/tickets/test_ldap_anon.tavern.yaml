@@ -1,0 +1,32 @@
+---
+test_name: 01-Enable ldap
+stages:
+
+  - name: 01-Enable ldap
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/sys/auth/ldap"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        type: "ldap"
+
+    response:
+      status_code: 200
+---
+test_name: 02-Configure ldap
+stages:
+
+  - name: 02-Configure ldap
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/auth/ldap/config"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        url: "ldap://52.165.39.214:389"
+        userdn: "CN=Users,DC=example,DC=com"
+        discoverdn: true
+        userattr: sAMAccountName
+    response:
+      status_code: 204

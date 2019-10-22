@@ -1,0 +1,171 @@
+
+---
+test_name: 00-Enable userpass auth and secrets
+stages:
+
+  - name: 00-Enable userpass auth
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/sys/auth/userpass"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        type: userpass
+
+    response:
+      status_code: 204
+  - name: 00-Enable secret at gts_test_collection
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/sys/mounts/gts_test_collection"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        type: kv
+        options:
+          version: '2'
+    response:
+      status_code: 204    
+---
+test_name: 01-Create user requestor
+stages:
+
+  - name: 01-Create user requestor
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/auth/userpass/users/requestor"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        password: "tavern"
+
+    response:
+      status_code: 204
+---
+test_name: 02-Create user approver
+stages:
+
+  - name: 02-Create user approver
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/auth/userpass/users/approver"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        password: "tavern"
+
+    response:
+      status_code: 204
+---
+test_name: 03-Create policies
+stages:
+  - name: Create approver-policy
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/sys/policy/approver-policy"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json: !include control_group_20201.approver_policy.json
+
+  - name: Create Requestor-policy
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/sys/policy/requestor-policy"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json: !include control_group_20201.requestor_policy.json
+    response:
+      status_code: 204
+---
+test_name: 04-Create Entity and group
+stages:
+  - name: Retrieve userpass accessor
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/sys/auth"
+      method: GET
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+
+    response:
+      status_code: 200
+      save:
+        body:
+          accessor: data."userpass/".accessor
+
+  - name: Create approver Entity
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/identity/entity"
+      method: PUT
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        metadata: team=Approver
+        name: approver
+        policies: approver-policy
+    response:
+      status_code: 
+        - 200
+        - 204
+      save:
+        body:
+          approver_identity_id: data.id
+
+  - name: Create approver entity alias 
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/identity/entity-alias"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        name: approver
+        canonical_id: "{approver_identity_id}"
+        mount_accessor:  "{accessor}"
+
+  - name: Create Requestor Entity
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/identity/entity"
+      method: PUT
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        metadata: team=Requestor
+        name: requestor
+        policies: requestor-policy
+    response:
+      status_code:
+        - 200
+        - 204
+      save:
+        body:
+          requestor_identity_id: data.id
+
+  - name: Create requestor entity alias 
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/identity/entity-alias"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        name: requestor
+        canonical_id: "{requestor_identity_id}"
+        mount_accessor:  "{accessor}"
+    response:
+      status_code:
+        - 200
+        - 204
+
+  - name: Create approver group
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/identity/group"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"
+      json:
+        name: approver-group
+        policies: approver-policy
+        member_entity_ids: "{approver_identity_id}"
+    response:
+      status_code:
+        - 200
+        - 204
+  
