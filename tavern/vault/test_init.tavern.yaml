@@ -1,0 +1,42 @@
+---
+test_name: 01-Init Vault
+stages:
+  - name: 01-Init Vault
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/sys/init"
+      method: PUT
+      json:
+        secret_shares: 1
+        secret_threshold: 1
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: myutils:save_response
+          extra_kwargs:
+            mydir: "{tavern.env_vars.VAULT_CLUSTER}"
+            filename: init.json
+        body:
+          keys: keys
+          root_token: root_token
+---
+test_name: 02-Unseal Vault
+stages:
+  - name: 02-Unseal Vault
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/sys/unseal"
+      method: PUT
+      json:
+        $ext:
+          function: myutils:read_init
+          extra_kwargs:
+            mydir: "{tavern.env_vars.VAULT_CLUSTER}"
+            filename: init.json
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: myutils:save_response
+          extra_kwargs:
+            mydir: "{tavern.env_vars.VAULT_CLUSTER}"
+            filename: unsealed_response.json

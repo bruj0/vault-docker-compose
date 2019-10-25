@@ -17,19 +17,19 @@ listener "tcp" {
 }
 ui = "true"
 cluster_address = "0.0.0.0:8201"
-cluster_name = "Primary"
+cluster_name = "Secondary"
 # -----------------------------------------------------------------------
 # Storage configuration
 # -----------------------------------------------------------------------
 storage "consul" {
-  address            = "consul_agent_1:8500"
+  address            = "sec-consul-agent-3:8500"
   scheme             = "http"
 #  tls_ca_file        = "/etc/ssl/certs/ca.pem"
-  token = "49792521-8362-f878-5a32-7405f1783838"
+  token = "50792521-8362-f878-5a32-7405f1783899"
   path               = "vault/"
 # disable_clustering = "${disable_clustering}"
 # service_tags       = "${service_tags}"
-#  service_address    = "vault01-service"
+# service_address    = "vault01-service"
 }
 
 # -----------------------------------------------------------------------
