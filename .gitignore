@@ -1,7 +1,13 @@
 .vagrant
 *~
+prem/vault
 data/
 .pytest_cache
 __pycache__
 .vscode
-
+secondary/consul/data
+secondary/vault/logs
+vault/logs
+consuo/data
+tavern/vault/primary
+tavern/vault/secondary

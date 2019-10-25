@@ -1,0 +1,21 @@
+version: '3'
+networks:
+  vault_primary:
+    external: true
+  vault_secondary:
+    external: true
+
+services:
+  haproxy:
+    image: haproxy:2.0
+    container_name: haproxy
+    networks:
+      - vault_primary
+      - vault_secondary
+    environment:
+      - LOG_LEVEL=debug
+    ports:
+      - "8880:80"
+      - "8819:1936"
+    volumes:
+    - "./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro"

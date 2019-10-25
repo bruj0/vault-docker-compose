@@ -18,12 +18,13 @@ listener "tcp" {
 }
 ui = "true"
 cluster_address = "0.0.0.0:8201"
+cluster_name = "Primary"
 # -----------------------------------------------------------------------
 # Storage configuration
 # -----------------------------------------------------------------------
 
 storage "consul" {
-  address            = "consul-agent-2:8500"
+  address            = "consul_agent_2:8500"
   scheme             = "http"
 #  tls_ca_file        = "/etc/ssl/certs/ca.pem"
   token = "49792521-8362-f878-5a32-7405f1783838"

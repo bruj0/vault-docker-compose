@@ -1,0 +1,53 @@
+version: '3'
+networks:
+  vault_primary:
+    external: true
+
+services:
+  consul_agent_1: &consul_agent
+    networks:
+      - vault_primary
+  
+  consul_agent_2:
+    networks:
+      - vault_primary
+
+  consul_agent_3:
+    networks:
+      - vault_primary
+      
+  consul_server_1: &consul_server
+    networks:
+      - vault_primary
+
+  consul_server_2:
+    networks:
+      - vault_primary
+
+  consul_server_bootstrap:
+    networks:
+      - vault_primary
+    ports:
+      - "8400:8400"
+      - "8500:8500"
+      - "8600:8600"
+      - "8600:8600/udp"
+
+## VAULT cluster configuration
+  vault01: &vault_server
+    networks:
+      - vault_primary    
+    ports:
+      - 9201:8200
+  
+  vault02: 
+    networks:
+      - vault_primary  
+    ports:
+      - 9202:8200
+      
+  vault03:
+    networks:
+      - vault_primary  
+    ports:
+      - 9203:8200
