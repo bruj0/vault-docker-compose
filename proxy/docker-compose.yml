@@ -15,7 +15,7 @@ services:
     environment:
       - LOG_LEVEL=debug
     ports:
-      - "8880:80"
+      - "8801:8200"
       - "8819:1936"
     volumes:
     - "./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro"
