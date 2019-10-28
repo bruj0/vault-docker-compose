@@ -22,7 +22,7 @@ cluster_name = "Secondary"
 # Storage configuration
 # -----------------------------------------------------------------------
 storage "consul" {
-  address            = "sec-consul-agent-2:8500"
+  address            = "secondary_consul_agent_2_1:8500"
   scheme             = "http"
 #  tls_ca_file        = "/etc/ssl/certs/ca.pem"
   token = "50792521-8362-f878-5a32-7405f1783899"

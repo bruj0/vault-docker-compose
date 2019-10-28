@@ -16,7 +16,8 @@ To be able to easily setup and test different configuration and features of a fu
 * [Tavern-ci](https://taverntesting.github.io/)
   * Initialization
   * API management
-
+* Access to Premium or Pro version of Vault
+ 
 ## Networks
 It uses 3 networks:
 * vault_primary
@@ -29,7 +30,7 @@ Each network hosts this configuration of servers (currently only 3 Consul nodes)
 
 ## Communication between them
 
-It uses an (HAProxy) instance in TCP mode by accessing the IP trough DNS, this can be changed to any type of service discovery supported by Consul.
+It uses an HAProxy instance in TCP mode by accessing the IP trough consul SRV DNS record but this can be changed to any type of service discovery supported by HAProxy.
 
 ![proxy](https://d33wubrfki0l68.cloudfront.net/b2d787641bf2dda0a8a1abf691cd9723a9c0ed8c/7b419/static/img/vault-ref-arch-9.png)
 
@@ -41,21 +42,34 @@ $ export CLUSTER=primary|secondary|dr
 $ export VAULT_CLUSTER=${CLUSTER}
 $ export CONSUL_CLUSTER=${CLUSTER}
 $ export COMPOSE_PROJECT_NAME=${CLUSTER}
-$ docker-compose -f docker-compose.${CLUSTER}.yml -f docker-compose.yml up -d
+$ docker-compose -f docker-compose.${CLUSTER}.yml -f docker-compose.yml up -d 
 ```
 or
 
 ```
-$ ./dc.sh up -d
+$ VAULT_CLUSTER=primary|secondary|dr ./dc.sh up
 ```
+
 Make sure the consul cluster is up and running:
 
 ```
 $ docker logs -f primary_consul_server_bootstrap_1
 ```
 
+
+Other commands supported
+```
+$ VAULT_CLUSTER=primary|secondary|dr ./dc.sh restart vault
+$ VAULT_CLUSTER=primary|secondary|dr ./dc.sh restart consul
+$ ./dc.sh restart proxy
+```
+
 ## Initialization
-This will init vault and and save the unseal keys and root token under the directory ```tavern/vault/${VAULT_CLUSTER}```  as json files.
+This is all automated with the `up` command and its here for documentation purposes.
+
+To init vault we execute a `Tavern` script that will use the API directly, you can take a look at them under `tavern/vault`.
+
+This will save the unseal keys and root token under the directory ```tavern/vault/${VAULT_CLUSTER}```  as json files.
 ```
 $ cd tavern/vault
 $ export VAULT_ADDR=http://127.0.0.1:XXXX

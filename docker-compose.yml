@@ -28,6 +28,7 @@ services:
 
   consul_server_bootstrap:
     <<: *consul_agent
+    image: consul:1.6.1
     command: "agent -server -bootstrap-expect 3 -ui -client 0.0.0.0"
     volumes:
         - ./consul/config:/consul/config
