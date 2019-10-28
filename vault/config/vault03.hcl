@@ -24,7 +24,7 @@ cluster_name = "Primary"
 # -----------------------------------------------------------------------
 
 storage "consul" {
-  address            = "consul_agent_3:8500"
+  address            = "primary_consul_agent_3_1:8500"
   scheme             = "http"
 #  tls_ca_file        = "/etc/ssl/certs/ca.pem"
   token = "49792521-8362-f878-5a32-7405f1783838"

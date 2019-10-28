@@ -4,27 +4,27 @@ networks:
     external: true
 
 services:
-  consul-agent-1: &consul-agent
+  consul_agent_1: &consul-agent
     networks:
       - vault_secondary
   
-  consul-agent-2:
+  consul_agent_2:
     networks:
       - vault_secondary
 
-  consul-agent-3:
+  consul_agent_3:
     networks:
       - vault_secondary
 
   consul_server_1: &consul_server
     networks:
-      - vault_primary
+      - vault_secondary
 
   consul_server_2:
     networks:
-      - vault_primary
+      - vault_secondary
 
-  consul-server-bootstrap:
+  consul_server_bootstrap:
     networks:
       - vault_secondary
     ports:
