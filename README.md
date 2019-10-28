@@ -1,11 +1,22 @@
 # What is it
-A way to create a multiple Vault clusters and setup different types of Replication between them as close as possible to the "Vault reference architecture" https://learn.hashicorp.com/vault/operations/ops-reference-architecture
+A way to create multiple Vault clusters and setup different types of Replication between them as close as possible to the "Vault reference architecture" https://learn.hashicorp.com/vault/operations/ops-reference-architecture
 
 Using the 3 Region setup architecture:
 
 ![3 regions](https://d33wubrfki0l68.cloudfront.net/f4320f807477cdda5df25f904eaf3d7c9cfd761d/e6047/static/img/vault-ra-full-replication_no_region.png)
 
-# Networks
+# Why 
+To be able to easily setup and test different configuration and features of a full fledge Vault and Consul cluster setup.
+
+# How
+* Docker and docker-compose for the scheduling of containers.
+* Docker-compose overlaying of configuration to avoid duplication
+* [Tavern-ci](https://taverntesting.github.io/) for initialization and API management.
+* Minimum use of simple shell scripts
+
+
+
+## Networks
 It uses 3 networks:
 * vault_primary
 * vault_secondary
@@ -15,22 +26,14 @@ Each network hosts this configuration of servers (currently only 3 Consul nodes)
 
 ![Single availability zone](https://d33wubrfki0l68.cloudfront.net/177ba67519ffb1c802f5cb699c0b70cb40533ab6/63838/static/img/vault-ra-1-az.png)
 
-# Communication between them
+## Communication between them
 
 It uses an (HAProxy) instance in TCP mode by accessing the IP trough DNS, this can be changed to any type of service discovery supported by Consul.
 
 ![proxy](https://d33wubrfki0l68.cloudfront.net/b2d787641bf2dda0a8a1abf691cd9723a9c0ed8c/7b419/static/img/vault-ref-arch-9.png)
 
-# How
-* Docker and docker-compose for the scheduling of containers.
-* Docker-compose overlaying of configuration to avoid duplication
-* [Tavern-ci](https://taverntesting.github.io/) for initialization and API management.
-* Minimum use of simple shell scripts
 
-# Why 
-To be able to easily setup and test different configuration and features of a full fledge Vault and Consul cluster setup.
-
-# Using it
+## Starting it
 On each directory, root, secondary and dr:
 ```
 $ export CLUSTER=primary|secondary|dr
@@ -43,6 +46,20 @@ or
 
 ```
 $ ./dc.sh up -d
+```
+Make sure the consul cluster is up and running:
+
+```
+$ docker logs -f primary_consul_server_bootstrap_1
+```
+
+## Initialization
+This will init vault and and save the unseal keys and root token under the directory ```tavern/vault/${VAULT_CLUSTER}```  as json files.
+```
+$ cd tavern/vault
+$ export VAULT_ADDR=http://127.0.0.1:XXXX
+$ export VAULT_CLUSTER=primary|secondary|dr
+$ tavern-ci test_init.tavern.yaml 
 ```
 
 ## Exposed ports: local -> container
@@ -61,7 +78,8 @@ $ ./dc.sh up -d
 - 8819 -> 1936 (HAProxy stats)
 
 # TODO
-- [ ] Add DR cluster
-- [x] Add initialization with tavern
-- [ ] Add vault container for PKI
+- [ ] DR cluster
+- [x] Initialization with tavern
+- [ ] Vault container for PKI
 - [ ] Generate PKI certificates and install them
+- [ ] HSM auto unsealing
