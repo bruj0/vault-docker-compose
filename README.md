@@ -8,13 +8,14 @@ Using the 3 Region setup architecture:
 # Why 
 To be able to easily setup and test different configuration and features of a full fledge Vault and Consul cluster setup.
 
-# How
-* Docker and docker-compose for the scheduling of containers.
-* Docker-compose overlaying of configuration to avoid duplication
-* [Tavern-ci](https://taverntesting.github.io/) for initialization and API management.
-* Minimum use of simple shell scripts
-
-
+# Requirements or the How
+* Docker 
+* Docker-compose:
+  *  Scheduling of containers
+  *  Overlaying of configuration to avoid duplication
+* [Tavern-ci](https://taverntesting.github.io/)
+  * Initialization
+  * API management
 
 ## Networks
 It uses 3 networks:
