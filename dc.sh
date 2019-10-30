@@ -10,8 +10,8 @@ function vault_unseal {
 }
 
 # Initial checking
-if [ -z "${VAULT_CLUSTER}" ]; then
-    echo "Error: VAULT_CLUSTER is not set"
+if [ -z "${CLUSTER}" ]; then
+    echo "Error: CLUSTER is not set"
     exit 0
 fi
 
@@ -19,7 +19,7 @@ fi
 typeset -a VAULT_primary_PORTS=("9201" "9202" "9203")
 typeset -a VAULT_secondary_PORTS=("9301" "9302" "9303")
 
-CLUSTER=${VAULT_CLUSTER}
+
 export VAULT_CLUSTER=${CLUSTER}
 export CONSUL_CLUSTER=${CLUSTER}
 export COMPOSE_PROJECT_NAME=${CLUSTER}
@@ -67,8 +67,8 @@ if [ "$1" == "up" ]; then
     cd ${ROOT}/tavern/vault
 
     if [ ! -f "$CLUSTER/init.json" ]; then
-        echo "Initializing Vault for ${CLUSTER}"
-        echo tavern-ci test_init.taver.yaml --debug
+        echo "Initializing Vault cluster ${CLUSTER} at ${VAULT_ADDR}"
+        tavern-ci test_init.tavern.yaml --debug
     fi
 
     vault_unseal
@@ -89,4 +89,14 @@ if [[ "$1" == "restart" ]]; then
     fi
 fi
 
+# Cli command
+# $2 vault or consul or show
+# $3 command
+
+if [[ "$1" == "cli" ]]; then
+    if [[ "$2" == "vault" ]]; then
+        eval var=( \${VAULT_${VAULT_CLUSTER}_PORTS[@]} ) ;
+        VAULT_TOKEN=$(cat ${ROOT}/tavern/vault/${VAULT_CLUSTER}/init.json | jq -r '.root_token') VAULT_ADDR=http://127.0.0.1:${var[0]} vault ${@:3}
+    fi
+fi
 cd ${ROOT}
