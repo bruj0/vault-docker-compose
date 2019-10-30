@@ -1,9 +1,18 @@
-# What is it
+# The What
 A way to create multiple Vault clusters and setup different types of Replication between them as close as possible to the "Vault reference architecture" https://learn.hashicorp.com/vault/operations/ops-reference-architecture
 
 Using the 3 Region setup architecture:
 
 ![3 regions](https://d33wubrfki0l68.cloudfront.net/f4320f807477cdda5df25f904eaf3d7c9cfd761d/e6047/static/img/vault-ra-full-replication_no_region.png)
+
+Each `Region` is composed of a docker network and has a set of Vault and Consul clusters.
+
+They can only communicate with each other using a `proxy` (sometimes incorrectly called Load Balancer) in this case `HAProxy`.
+- Region 1 contains the `Primary` Vault cluster, configured following the [Deployment Guide](https://learn.hashicorp.com/vault/day-one/ops-deployment-guide)  
+- Region 2 contains the `Secondary` Vault cluster, configured as [Performance Replication](https://learn.hashicorp.com/vault/operations/ops-replication)
+- Region 3 will contain a `DR` Vault cluster configured as [Disaster Recovery](https://learn.hashicorp.com/vault/operations/ops-disaster-recovery)
+  
+All regions have a Consul cluster for storage and every Vault node has a `Consul Agent` in a different container.
 
 # Why 
 To be able to easily setup and test different configuration and features of a full fledge Vault and Consul cluster setup.
@@ -18,7 +27,30 @@ To be able to easily setup and test different configuration and features of a fu
   * API management
 * Access to Premium or Pro version of Vault
  
-## Networks
+     
+To talk to Vault we will use `Tavern-ci`, this is a yaml file where we define how the API call will look lik.
+
+The benefits over a bash script using `curl` is that we can manipulate the response and its very clear what the call does.
+
+You can take a look at them under `tavern/vault`, for example:
+```yaml
+---
+test_name: 01-Enable primary
+stages:
+  - name: 01-Enable primary
+    request:
+      url: "{tavern.env_vars.VAULT_ADDR}/v1/sys/replication/performance/primary/enable"
+      method: POST
+      headers:
+        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"      
+      json:
+        primary_cluster_addr: "{tavern.env_vars.PRIMARY_HAPROXY_ADDR}"
+    response:
+      status_code: 200
+```
+
+
+## Networks or Regions
 It uses 3 networks:
 * vault_primary
 * vault_secondary
@@ -36,46 +68,81 @@ It uses an HAProxy instance in TCP mode by accessing the IP trough consul SRV DN
 
 
 ## Starting it
-On each directory, root, secondary and dr:
-```
-$ export CLUSTER=primary|secondary|dr
-$ export VAULT_CLUSTER=${CLUSTER}
-$ export CONSUL_CLUSTER=${CLUSTER}
-$ export COMPOSE_PROJECT_NAME=${CLUSTER}
-$ docker-compose -f docker-compose.${CLUSTER}.yml -f docker-compose.yml up -d 
-```
-or
 
+This is handled by the `dc.sh` script:
 ```
-$ VAULT_CLUSTER=primary|secondary|dr ./dc.sh up
+$ CLUSTER=primary|secondary|dr ./dc.sh up
 ```
-
-Make sure the consul cluster is up and running:
-
-```
-$ docker logs -f primary_consul_server_bootstrap_1
-```
-
-
 Other commands supported
 ```
-$ VAULT_CLUSTER=primary|secondary|dr ./dc.sh restart vault
-$ VAULT_CLUSTER=primary|secondary|dr ./dc.sh restart consul
+$ export CLUSTER=primary|secondary|dr 
+$ ./dc.sh restart vault
+$ ./dc.sh restart consul
 $ ./dc.sh restart proxy
+$ ./dc.sh cli vault <command>
+```
+## How `dc.sh` works
+*This is all automated with the `up` command and its here for documentation purposes.*
+
+- To bring up the docker containers, go to the directory for the cluster:
+  * Primary -> /
+  * Secondary -> secondary
+  * DR -> dr
+  
+    Execute:
+
+    ```
+    $ export CLUSTER=primary|secondary|dr
+    $ export VAULT_CLUSTER=${CLUSTER}
+    $ export CONSUL_CLUSTER=${CLUSTER}
+    $ export COMPOSE_PROJECT_NAME=${CLUSTER}
+    $ docker-compose -f docker-compose.${CLUSTER}.yml -f docker-compose.yml up -d 
+    ```
+- Initialization of Vault
+    This will save the unseal keys and root token under the directory ```tavern/vault/${VAULT_CLUSTER}```  as json files.
+    ```
+    $ cd tavern/vault
+    $ export VAULT_ADDR=http://127.0.0.1:XXXX
+    $ export VAULT_CLUSTER=primary|secondary|dr
+    $ tavern-ci test_init.tavern.yaml 
+    ```
+- Unsealing, go to the `tavern/vault` directory and execute
+    ```
+    $ export VAULT_CLUSTER=${CLUSTER}
+    $ VAULT_ADDR="http://127.0.0.1:${port}"
+    $ tavern-ci test_unseal.tavern.yaml --debug
+    $ tavern-ci test_init.tavern.yaml --debug
+    ```
+## Troubleshooting
+
+- Make sure the consul cluster is up and running:
+    ```
+    $ CONSUL_HTTP_ADDR=http://127.0.0.1:8500 consul members
+    $ CONSUL_HTTP_ADDR=http://127.0.0.1:8500 consul operator raft list-peers
+    $ docker logs -f primary_consul_server_bootstrap_1
+    ```
+- Check `haproxy` logs
+  ```
+  $ docker logs -f haproxy
+  ```
+
+## Useful commands
+
+* How to use set the correct VAULT_TOKEN
+
+```
+$ export VAULT_TOKEN=(cat tavern/${CLUSTER}/init.json | jq -r '.root_token')
 ```
 
-## Initialization
-This is all automated with the `up` command and its here for documentation purposes.
+* How to get the network IP of a container
 
-To init vault we execute a `Tavern` script that will use the API directly, you can take a look at them under `tavern/vault`.
+```
+$ docker network inspect vault_${CLUSTER} | jq -r '.[] .Containers | with_entries(select(.value.Name=="CONTAINER_NAME"))| .[] .IPv4Address' | awk -F "/" '{print $1}'
+```
 
-This will save the unseal keys and root token under the directory ```tavern/vault/${VAULT_CLUSTER}```  as json files.
-```
-$ cd tavern/vault
-$ export VAULT_ADDR=http://127.0.0.1:XXXX
-$ export VAULT_CLUSTER=primary|secondary|dr
-$ tavern-ci test_init.tavern.yaml 
-```
+
+
+
 
 ## Exposed ports: local -> container
 ### Primary
@@ -93,8 +160,10 @@ $ tavern-ci test_init.tavern.yaml
 - 8819 -> 1936 (HAProxy stats)
 
 # TODO
-- [ ] DR cluster
-- [x] Initialization with tavern
-- [ ] Vault container for PKI
-- [ ] Generate PKI certificates and install them
+- [x] Initialization and Unsealing with tavern
+- [X] Configure Perfomance replication
+- [ ] Configure DR cluster
+- [ ] Add Vault container for PKI
+- [ ] Generate PKI certificates and use them
+- [ ] Configure Monitoring
 - [ ] HSM auto unsealing
