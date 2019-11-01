@@ -18,17 +18,19 @@ if [ -z "${CLUSTER}" ]; then
     exit 0
 fi
 
-#Variables setting
-typeset -a VAULT_primary_PORTS=("9201" "9202" "9203")
-typeset -a VAULT_secondary_PORTS=("9301" "9302" "9303")
-typeset -a VAULT_dr_PORTS=("9401" "9402" "9403")
-
+#External variables used by other scripts
 export PYTHONPATH=${PYTHONPATH}:../
 export VAULT_CLUSTER=${CLUSTER}
 export CONSUL_CLUSTER=${CLUSTER}
 export COMPOSE_PROJECT_NAME=${CLUSTER}
+
+#Internal variables
+typeset -a VAULT_primary_PORTS=("9201" "9202" "9203")
+typeset -a VAULT_secondary_PORTS=("9301" "9302" "9303")
+typeset -a VAULT_dr_PORTS=("9401" "9402" "9403")
 MAIN_COMPOSE=docker-compose.yml
 ROOT=$(pwd)
+SLEEP_TIME=2
 
 if [ "${CLUSTER}" == "primary" ];then
     MAIN_COMPOSE=docker-compose.yml
@@ -64,10 +66,52 @@ if [ "$1" == "up" ]; then
         RECREATE="--force-recreate"
         echo "* Forcing recreate"
     fi
-    ${COMPOSE_CMD} up -d ${RECREATE}
-    
-    echo "Waiting 10 seconds..."
-    sleep 10
+    echo "Starting consul server bootstrap"
+    ${COMPOSE_CMD} up -d consul_server_bootstrap ${RECREATE}
+    echo "Waiting for startup"
+    sleep ${SLEEP_TIME}
+
+    echo "Starting consul server 1"
+    ${COMPOSE_CMD} up -d consul_server_1 ${RECREATE}
+    echo "Waiting for startup"
+    sleep ${SLEEP_TIME}
+
+    echo "Starting consul server 2"
+    ${COMPOSE_CMD} up -d consul_server_2 ${RECREATE}
+    echo "Waiting for startup"
+    sleep ${SLEEP_TIME}
+
+    echo "Starting consul agent 1"
+    ${COMPOSE_CMD} up -d consul_agent_1 ${RECREATE}
+    echo "Waiting for startup"
+    sleep ${SLEEP_TIME}
+
+    echo "Starting consul agent 2"
+    ${COMPOSE_CMD} up -d consul_agent_2 ${RECREATE}
+    echo "Waiting for startup"
+    sleep ${SLEEP_TIME}
+
+    echo "Starting consul agent 3"
+    ${COMPOSE_CMD} up -d consul_agent_3 ${RECREATE}
+    echo "Waiting for startup"
+    sleep ${SLEEP_TIME}
+
+    SLEEP_TIME=$(( $SLEEP_TIME + ( $SLEEP_TIME * 2) ))
+    echo "Starting Vault server 1"
+    ${COMPOSE_CMD} up -d vault01 ${RECREATE}
+    echo "Waiting for startup"
+    sleep ${SLEEP_TIME}
+
+    echo "Starting Vault server 2"
+    ${COMPOSE_CMD} up -d vault02 ${RECREATE}
+    echo "Waiting for startup"
+    sleep ${SLEEP_TIME}
+
+    echo "Starting Vault server 3"
+    ${COMPOSE_CMD} up -d vault03 ${RECREATE}
+    echo "Waiting for startup"
+    sleep ${SLEEP_TIME}
+
 
     # Initializaing and Unsealing
     export PYTHONPATH=${ROOT}/tavern

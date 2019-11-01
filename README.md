@@ -199,7 +199,9 @@ $ docker network inspect vault_${CLUSTER} | jq -r '.[] .Containers | with_entrie
 # TODO
 - [x] Initialization and Unsealing with tavern
 - [X] Configure Perfomance replication
-- [ ] Configure DR cluster
+- [X] Configure DR cluster
+- [ ] Create replacement for Tavern
+- [ ] Better startup handling
 - [ ] Add Vault container for PKI
 - [ ] Generate PKI certificates and use them
 - [ ] Configure Monitoring
