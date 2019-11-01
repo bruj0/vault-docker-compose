@@ -4,6 +4,9 @@
 function vault_unseal {
     echo "Unsealing it"
     eval var=( \${VAULT_${VAULT_CLUSTER}_PORTS[@]} ) ;
+    if [[ "$1" != "" ]]; then
+        export VAULT_CLUSTER=$1
+    fi
     for port in "${var[@]}"; do
         VAULT_ADDR="http://127.0.0.1:${port}" tavern-ci test_unseal.tavern.yaml --debug
     done
@@ -18,8 +21,9 @@ fi
 #Variables setting
 typeset -a VAULT_primary_PORTS=("9201" "9202" "9203")
 typeset -a VAULT_secondary_PORTS=("9301" "9302" "9303")
+typeset -a VAULT_dr_PORTS=("9401" "9402" "9403")
 
-
+export PYTHONPATH=${PYTHONPATH}:../
 export VAULT_CLUSTER=${CLUSTER}
 export CONSUL_CLUSTER=${CLUSTER}
 export COMPOSE_PROJECT_NAME=${CLUSTER}
@@ -33,12 +37,12 @@ if [ "${CLUSTER}" == "primary" ];then
 elif [ "${CLUSTER}" == "secondary" ];then
     cd ${CLUSTER}
     MAIN_COMPOSE=../docker-compose.yml
-    export VAULT_ADDR=http://127.0.0.1:9302
+    export VAULT_ADDR=http://127.0.0.1:9301
 
 elif [ "${CLUSTER}" == "dr" ];then
     cd ${CLUSTER}
     MAIN_COMPOSE=../docker-compose.yml
-    export VAULT_ADDR=http://127.0.0.1:9402
+    export VAULT_ADDR=http://127.0.0.1:9401
 
 else
     echo "Error: Unknown cluster ${CLUSTER}"
@@ -61,6 +65,9 @@ if [ "$1" == "up" ]; then
         echo "* Forcing recreate"
     fi
     ${COMPOSE_CMD} up -d ${RECREATE}
+    
+    echo "Waiting 10 seconds..."
+    sleep 10
 
     # Initializaing and Unsealing
     export PYTHONPATH=${ROOT}/tavern
@@ -74,7 +81,20 @@ if [ "$1" == "up" ]; then
     vault_unseal
 
 fi
+#down command
+#also initializes if there is no init.json under tavern/vault/$CLUSTER
+if [ "$1" == "down" ]; then
+    ${COMPOSE_CMD} down
+fi
 
+# proxy command
+if [[ "$1" == "proxy" ]]; then
+    if [[ $2 == "start" ]]; then
+        pwd=$(pwd)
+        cd proxy
+        docker-compose up -d
+    fi
+fi
 # Restart command
 # if service start with vault then run vaul_seal func.
 if [[ "$1" == "restart" ]]; then
@@ -87,6 +107,19 @@ if [[ "$1" == "restart" ]]; then
     else
         ${COMPOSE_CMD} restart $2
     fi
+fi
+
+# unseal command
+# if replication is given as a parameter the primary unsealing key will be used
+if [[ "$1" == "unseal" ]]; then
+    pwd=$(pwd)
+    cd ${ROOT}/tavern/vault
+    if [[ $2 == "replication" ]]; then
+           vault_unseal primary
+    else
+        vault_unseal
+    fi
+    cd ${pwd}
 fi
 
 # Cli command

@@ -71,16 +71,53 @@ It uses an HAProxy instance in TCP mode by accessing the IP trough consul SRV DN
 
 This is handled by the `dc.sh` script:
 ```
-$ CLUSTER=primary|secondary|dr ./dc.sh up
+$ CLUSTER=primary ./dc.sh up
+$ ./dc.sh proxy start
+$ CLUSTER=secondary ./dc.sh up
 ```
-Other commands supported
+
+### Other commands supported
+All the commands read the `CLUSTER` variable to determine where is the operation going to run on.
+
+Example:
 ```
-$ export CLUSTER=primary|secondary|dr 
-$ ./dc.sh restart vault
-$ ./dc.sh restart consul
-$ ./dc.sh restart proxy
-$ ./dc.sh cli vault <command>
+$ CLUSTER=primary ./dc.sh cli vault status
+Key             Value
+---             -----
+Seal Type       shamir
+Initialized     true
+Sealed          false
+Total Shares    1
+Threshold       1
+Version         1.2.3+prem
+Cluster Name    Primary
+Cluster ID      a10b1027-e814-3b46-ae07-55581008e1eb
+HA Enabled      true
+HA Cluster      https://172.24.0.9:8201
+HA Mode         active
+Last WAL        257
 ```
+- `up`
+  - This will start the Vault and Consul cluster up for the specified type of cluster by doing a `docker-compose up -d`
+
+- `down`
+  - It will do a `docker-compose down` with the correct template
+  - 
+- `restart`
+  - vault
+  - consul
+  - proxy
+
+- `cli`
+  - vault <command>
+  - consul (not implemented yet)
+
+- `unseal`
+  - replication (if this argument is given the primary unseal key will be used instead)
+
+- `proxy`
+  - start
+
 ## How `dc.sh` works
 *This is all automated with the `up` command and its here for documentation purposes.*
 
