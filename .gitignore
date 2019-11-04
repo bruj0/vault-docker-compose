@@ -3,6 +3,7 @@
 prem/vault
 data/
 .pytest_cache
+yapi/__pycache__
 __pycache__
 .vscode
 secondary/consul/data
