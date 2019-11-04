@@ -26,6 +26,7 @@ To be able to easily setup and test different configuration and features of a fu
   * Initialization
   * API management
 * Access to Premium or Pro version of Vault
+* `vault` and `jq` binaries installed in the $PATH
  
      
 To talk to Vault we will use `Tavern-ci`, this is a yaml file where we define how the API call will look lik.
@@ -69,13 +70,29 @@ It uses an HAProxy instance in TCP mode by accessing the IP trough consul SRV DN
 
 ## Starting it
 
+
 This is handled by the `dc.sh` script:
+
+1. Create the docker networks
 ```
-$ CLUSTER=primary ./dc.sh up
-$ ./dc.sh proxy start
-$ CLUSTER=secondary ./dc.sh up
+$ docker network create {vault_primary,vault_secondary,vault_dr}
 ```
 
+2. Create the Tavern data directory
+
+```
+$ mkdir -p tavern/vault/{primary,secondary,dr}
+```
+
+3. Start the clusters
+```
+$ CLUSTER=primary ./dc.sh up
+$ CLUSTER=primary ./dc.sh proxy start
+$ CLUSTER=secondary ./dc.sh up
+```
+### TODO
+- [ ] add step numbers
+- [ ] create directories for tavern
 ### Other commands supported
 All the commands read the `CLUSTER` variable to determine where is the operation going to run on.
 
