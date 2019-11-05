@@ -22,7 +22,7 @@ To be able to easily setup and test different configuration and features of a fu
 * Docker-compose:
   *  Scheduling of containers
   *  Overlaying of configuration to avoid duplication
-* [Tavern-ci](https://taverntesting.github.io/)
+* [Tavern-ci](https://taverntesting.github.io/) (currently being replaced with `yapi`)
   * Initialization
   * API management
 * Access to Premium or Pro version of Vault

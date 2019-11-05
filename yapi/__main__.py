@@ -18,18 +18,19 @@ logger.info(f"Starting  {__version__}")
 
 def main():
     yl = YamlLoader()
+    #Will contain the "variables" block from the yaml
     variables = {
         'env_vars': dict(os.environ)
     }
     data = yl.load(cfg['in_file'])
-    logger.info(f"Run with file {cfg['in_file']}")
+    logger.info(f"Loading {cfg['in_file']}")
 
 
     #logger.debug(pprint(data))
 
     for stage in data['stages']:
         rr = RestRequest(stage['request'],variables)
-        rr.send()
+        rr.run()
 
 if __name__== "__main__":
   main()
