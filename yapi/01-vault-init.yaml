@@ -2,11 +2,15 @@
 stages:
   - name: 01-Unseal Vault
     request:
-      url: "{env_vars.VAULT_ADDR}/v1/sys/unseal"
+      url: "{env_vars.VAULT_ADDR}"
       method: PUT
+      headers:
+        X-Vault-Token: "{env_vars.VAULT_TOKEN}"      
       json:
+        key1: val1
+        key2: val2
         $ext:
-          function: myutils:read_init
+          function: extensions.read_file
           extra_kwargs:
             mydir: "{env_vars.VAULT_CLUSTER}"
             filename: init.json
@@ -14,7 +18,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: myutils:save_response
+          function: extensions.save_response
           extra_kwargs:
             mydir: "{env_vars.VAULT_CLUSTER}"
             filename: unsealed_response.json
