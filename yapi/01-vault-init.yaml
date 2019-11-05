@@ -7,18 +7,17 @@ stages:
       headers:
         X-Vault-Token: "{env_vars.VAULT_TOKEN}"      
       json:
-        key1: val1
+        keys: "{ext.keys_0}"
         key2: val2
         $ext:
-          function: extensions.read_file
+          function: extensions.read_json
           extra_kwargs:
-            mydir: "{env_vars.VAULT_CLUSTER}"
-            filename: init.json
+            path: "data/{env_vars.VAULT_CLUSTER}/init.json"
+            sub_vars: True
     response:
       status_code: 200
       save:
         $ext:
           function: extensions.save_response
           extra_kwargs:
-            mydir: "{env_vars.VAULT_CLUSTER}"
-            filename: unsealed_response.json
+            path: "data/{env_vars.VAULT_CLUSTER}/unsealed_response.json"

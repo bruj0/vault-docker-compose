@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from yapi.request import request as RestRequest
+from yapi.response import response as RestResponse
 from yapi.loader import yaml_loader as YamlLoader
 from box import Box
 import logging
@@ -29,8 +30,10 @@ def main():
     #logger.debug(pprint(data))
 
     for stage in data['stages']:
-        rr = RestRequest(stage['request'],variables)
-        rr.run()
+        request = RestRequest(stage['request'],variables)
+        resp = request.run()
+        RestResponse(resp).validate(stage['response'])
+
 
 if __name__== "__main__":
   main()
