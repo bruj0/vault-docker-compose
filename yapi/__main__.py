@@ -32,8 +32,9 @@ def main():
     for stage in data['stages']:
         request = RestRequest(stage['request'],variables)
         resp = request.run()
-        RestResponse(resp).validate(stage['response'])
+        RestResponse(resp,variables).validate(stage['response'])
 
+    logger.info(f"Finished {cfg['in_file']}")
 
 if __name__== "__main__":
   main()
