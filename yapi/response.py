@@ -11,36 +11,42 @@ logger = logging.getLogger(__name__)
 
 class response:
     rsp = {}
-    def __init__(self,rsp):
+    extensions = None
+    def __init__(self,rsp,variables):
+        self.variables = variables
         self.rsp=rsp
+        self.extensions = Extensions()
 
     def validate(self,expected):
         rsp = self.rsp
-        logger.debug(f"Response data \n{pformat(rsp,width=1)}")
+        #logger.debug(f"Response data \n{pformat(rsp,width=1)}")
         logger.debug(f"Expected \n{pformat(expected,width=1)}")
 
         if rsp.status_code != int(expected['status_code']):
-            logger.error(f"Received status code {rsp.status_code} != {expected['status_code']}")
+            logger.error(f"ERROR: Received status code {rsp.status_code} != {expected['status_code']}")
             exit(1)
         else:
-            logger.info(f"Received status code {rsp.status_code} == {expected['status_code']}")
+            logger.info(f"OK: Received status code {rsp.status_code} == {expected['status_code']}")
 
-        logger.debug(f"Response text\n{rsp.text}")
+        #logger.debug(f"Response text\n{rsp.text}")
+
+        expected = format_keys(expected, self.variables)
+
+        logger.debug(f"Formatted expected \n{pformat(expected,width=1)}")
 
         for key in expected:
             try:
                 func = self.get_wrapped_create_function(expected[key].pop("$ext"),rsp.text)
-                logger.debug(f"Func is {func}")
             except (KeyError, TypeError, AttributeError):
                 #logger.info(f"Testing func in {key}")
                 pass
             else:
                 func_data=func()
-                logger.debug(f"Ret from func: {pformat(func_data)}")
+                logger.debug(f"Calling {func}: {pformat(func_data)}")
 
     def get_wrapped_create_function(self,ext,data):
 
-        logger.debug(f"ext={ext}")
+        #logger.debug(f"ext={ext}")
         args = ext.get("extra_args") or ()
         kwargs = ext.get("extra_kwargs") or {}
         kwargs.update({ 'response_text': data})
@@ -58,7 +64,7 @@ class response:
             logger.exception(msg)
 
         #func = import_ext_function(ext["function"])
-        logger.debug(f"Adding function {func} with args:{args} and kwargs:{kwargs}")
+        logger.debug(f"Adding function {func} with args:{args} and kwargs:{kwargs.keys()}")
         @functools.wraps(func)
         def inner():
             return func(*args, **kwargs)

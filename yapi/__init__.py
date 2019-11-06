@@ -19,7 +19,7 @@ def get_config():
 __version__ = "0.1"
 cfg = get_config()
 
-if "debug" in cfg:
+if cfg["debug"] is True:
     log_level = "DEBUG"
 else:
     log_level = "INFO"
@@ -30,9 +30,13 @@ log_cfg = {
     'disable_existing_loggers': False,
     "formatters": {
         "default": {
+            "format": "%(asctime)s [%(levelname)s]: %(message)s",
+            "style": "%",
+        },
+        "debug": {
             "format": "%(asctime)s [%(levelname)s] (%(name)s:%(lineno)d): %(message)s",
             "style": "%",
-        }
+        }        
     },
     "handlers": {
         "to_stdout": {
@@ -49,6 +53,9 @@ log_cfg = {
     }#,
     #'root': {"handlers": ["to_stdout"], "level": log_level}
 }
+
+if log_level == "DEBUG":
+    log_cfg['handlers']['to_stdout']['formatter']='debug'
 
 if "log_to_file" in cfg:
     log_cfg["handlers"].update(

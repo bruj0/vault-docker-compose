@@ -21,3 +21,4 @@ stages:
           function: extensions.save_response
           extra_kwargs:
             path: "data/{env_vars.VAULT_CLUSTER}/unsealed_response.json"
+            key: "headers"

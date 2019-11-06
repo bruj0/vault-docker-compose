@@ -123,23 +123,21 @@ class request():
             if isinstance(fspec["timeout"], list):
                 request_args["timeout"] = tuple(fspec["timeout"])
 
-        logger.debug(f"request_args={pformat(request_args)}")
-
         for key in optional_in_file:
             try:
                 func = self.get_wrapped_create_function(request_args[key].pop("$ext"))
-                logger.debug(f"Func is {func}")
+                #logger.debug(f"Calling $ext function at {func}")
             except (KeyError, TypeError, AttributeError):
                 #logger.info(f"Testing func in {key}")
                 pass
             else:
                 func_data=func()
-                logger.debug(f"Data from func: {pformat(func_data)}")
+                logger.debug(f"Calling {func} from {key}")
                 if 'ext' in func_data:
                     request_args[key] = format_keys(request_args[key], func_data,False)
+                    #logger.debug(f"Reformatting request_args[{key}]={pformat(request_args[key])}")
                 else:
                     request_args[key].update(func_data)
-                logger.debug(f"request_args[key]={pformat(request_args[key])}")
 
         # If there's any nested json in parameters, urlencode it
         # if you pass nested json to 'params' then requests silently fails and just
@@ -167,13 +165,13 @@ class request():
                 logger.warn(
                     "You are trying to send a body with a HTTP verb that has no semantic use for it"
                 )
-        logger.debug(f"request_args={request_args}")
+        logger.debug(f"Final request_args={pformat(request_args)}")
         return request_args
 
 
     def get_wrapped_create_function(self,ext):
 
-        logger.debug(f"ext={ext}")
+        #logger.debug(f"ext={ext}")
         args = ext.get("extra_args") or ()
         kwargs = ext.get("extra_kwargs") or {}
 
