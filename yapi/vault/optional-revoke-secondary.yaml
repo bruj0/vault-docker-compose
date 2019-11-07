@@ -1,0 +1,14 @@
+---
+test_name: Revoke secondary
+stages:
+  - name: Revoke secondary
+    request:
+      url: "{env_vars.VAULT_ADDR}/v1/sys/replication/performance/primary/revoke-secondary"
+      method: POST
+      headers:
+        X-Vault-Token: "{env_vars.VAULT_TOKEN}"      
+      json:
+        id: "secondary"
+    response:
+      status_code: 200
+

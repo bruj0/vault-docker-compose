@@ -68,36 +68,139 @@ It uses an HAProxy instance in TCP mode by accessing the IP trough consul SRV DN
 ![proxy](https://d33wubrfki0l68.cloudfront.net/b2d787641bf2dda0a8a1abf691cd9723a9c0ed8c/7b419/static/img/vault-ref-arch-9.png)
 
 
-## Starting it
+## Initial configuration
 
 
 This is handled by the `dc.sh` script:
 
 1. Create the docker networks
-```
+```bash
 $ docker network create {vault_primary,vault_secondary,vault_dr}
 ```
 
 2. Create the Tavern data directory
 
-```
+```bash
 $ mkdir -p tavern/vault/{primary,secondary,dr}
 ```
 
-3. Start the clusters
-```
+## Start the clusters
+```bash
 $ CLUSTER=primary ./dc.sh up
 $ ./dc.sh proxy start
 $ CLUSTER=secondary ./dc.sh up
 ```
-### TODO
-- [ ] add step numbers
-- [ ] create directories for tavern
+
+## Configure performance replication
+
+- Set the correct environmental variables, you can get them from the output of this command.
+```bash
+$ env CLUSTER=primary ./dc.sh cli vars
+Exporting variables for primary
+export VAULT_ADDR="http://127.0.0.1:9201"
+export VAULT_DATA="./vault/api"
+export VAULT_TOKEN="s.YFfiUgyPCZAtJIQ55NtvVa2K"
+```
+- Enable replication
+  
+`SECONDARY_HAPROXY_ADDR` is the IP of the network card in the `proxy` container that is connected to the network `vault_secondary`.
+
+We need this IP so that the secondary cluster can contact the primary trough the proxy.
+
+It will be configured as the `primary_cluster_addr` variable in Vault.
+
+```bash
+$ export SECONDARY_HAPROXY_ADDR=(docker network inspect vault_secondary | jq -r '.[] .Containers | with_entries(select(.value.Name=="haproxy"))| .[] .IPv4Address' | awk -F "/" '{print $1}')
+$ CLUSTER=primary ./dc.sh cli yapi yapi/vault/03-replication_enable_primary.yaml
+```
+- Check that the replication was configured correctly:
+
+```json
+$ CLUSTER=primary ./dc.sh cli vault read sys/replication/status -format=json
+{
+  "request_id": "c2e75241-9d82-7d32-41dc-f68998d58610",
+  "lease_id": "",
+  "lease_duration": 0,
+  "renewable": false,
+  "data": {
+    "dr": {
+      "mode": "disabled"
+    },
+    "performance": {
+      "cluster_id": "2cc7aad6-026a-9620-6f0d-1e8fa939a11e",
+      "known_secondaries": [
+        "secondary"
+      ],
+      "last_reindex_epoch": "0",
+      "last_wal": 63,
+      "merkle_root": "ef70ddb8948f4dbbd90980f418195d30acddb0d2",
+      "mode": "primary",
+      "primary_cluster_addr": "https://172.25.0.2:8201",
+      "state": "running"
+    }
+  },
+  "warnings": null
+}
+```
+
+- Create secondary token
+  
+This will save the token to `vault/api/secondary-token.json` and create it with the `id=secondary`
+
+```bash
+$ CLUSTER=primary ./dc.sh cli yapi yapi/vault/04-replication_secondary_token.yaml
+```
+
+- Enable replication on the secondary cluster
+
+We dont use `cli yapi` because we are mixing the Vault address of the secondary with the data of the primary.
+
+```bash
+$ export VAULT_DATA="./vault/api"
+$ export VAULT_ADDR="http://127.0.0.1:9301"
+$ yapi yapi/vault/04-replication_secondary_token.yaml
+```
+This will save the response to `vault/api/enable-secondary-resp.json`
+
+- Check that the replication is working on the secondary
+
+```json
+$ env DEBUG=false CLUSTER=secondary ./dc.sh cli vault read sys/replication/status -format=json
+{
+  "request_id": "af4cd82c-9b57-0061-1fe1-09f06166bed7",
+  "lease_id": "",
+  "lease_duration": 0,
+  "renewable": false,
+  "data": {
+    "dr": {
+      "mode": "disabled"
+    },
+    "performance": {
+      "cluster_id": "2cc7aad6-026a-9620-6f0d-1e8fa939a11e",
+      "known_primary_cluster_addrs": [
+        "https://172.24.0.8:8201",
+        "https://172.24.0.9:8201",
+        "https://172.24.0.10:8201"
+      ],
+      "last_reindex_epoch": "1573144926",
+      "last_remote_wal": 0,
+      "merkle_root": "ef70ddb8948f4dbbd90980f418195d30acddb0d2",
+      "mode": "secondary",
+      "primary_cluster_addr": "https://172.25.0.2:8201",
+      "secondary_id": "secondary",
+      "state": "stream-wals"
+    }
+  },
+  "warnings": null
+}
+```
+
+
 ### Other commands supported
 All the commands read the `CLUSTER` variable to determine where is the operation going to run on.
 
 Example:
-```
+```bash
 $ CLUSTER=primary ./dc.sh cli vault status
 Key             Value
 ---             -----
@@ -114,28 +217,31 @@ HA Cluster      https://172.24.0.9:8201
 HA Mode         active
 Last WAL        257
 ```
-- `config`
-  - Will execute `docker-compose config` with the proper templates 
-- `up`
-  - This will start the Vault and Consul cluster up for the specified type of cluster by doing a `docker-compose up -d`
+- `config`: Will execute `docker-compose config` with the proper templates 
+- `up`: This will start the Vault and Consul cluster up for the specified type of cluster by doing a `docker-compose up -d`
 
-- `down`
-  - It will do a `docker-compose down` with the correct template
+- `down`: It will do a `docker-compose down` with the correct template
 
-- `wipe`
-  - Will wipe the consul data files, make sure to do it after `down`
+- `wipe`: Will wipe the consul data files, make sure to do it after `down`
 
 - `restart`
   - vault
   - consul
   - proxy
 
-- `cli`
-  - vault <command>
-  - consul (not implemented yet)
+- `cli`: This will set the variables `VAULT_TOKEN` from `vault/api/init.json` and `VAULT_ADDR` to the port of the first node of the selected cluster.
+  - `vars`: Prints variables for the given cluster 
+```bash
+$ env CLUSTER=primary ./dc.sh cli vars                                                                                        Exporting variables for primary
+export VAULT_ADDR="http://127.0.0.1:9201"
+export VAULT_DATA="./vault/api"
+export VAULT_TOKEN="s.YFfiUgyPCZAtJIQ55NtvVa2K"
+```
+  - `vault <command>`
+  - `yapi <template file>[--debug]`
 
 - `unseal`
-  - replication (if this argument is given the primary unseal key will be used instead)
+  - replication: if this argument is given the primary unseal key will be used instead
 
 - `proxy`
   - start

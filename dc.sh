@@ -57,9 +57,8 @@ case $CLUSTER in
     ;;
 esac
 
-MAIN_COMPOSE="${CLUSTER_DIR}/docker-compose.yml"
 export VAULT_DATA="${CLUSTER_DIR}/vault/api"
-COMPOSE_CMD="docker-compose -f ${CLUSTER_DIR}/docker-compose.${CLUSTER}.yml -f ${MAIN_COMPOSE}"
+COMPOSE_CMD="docker-compose -f ${CLUSTER_DIR}/docker-compose.${CLUSTER}.yml -f docker-compose.yml"
 
 
 
@@ -180,10 +179,25 @@ case "$1" in
 # Cli command
 # $2 vault or consul or show
 # $3 command
-        if [[ "$2" == "vault" ]]; then
-            eval var=( \${VAULT_${VAULT_CLUSTER}_PORTS[@]} ) ;
-            VAULT_TOKEN=$(cat ${ROOT}/yapi/vault/${VAULT_CLUSTER}/init.json | jq -r '.root_token') VAULT_ADDR=http://127.0.0.1:${var[0]} vault ${@:3}
-        fi
+        export VAULT_TOKEN=$(cat ${VAULT_DATA}/init.json | jq -r '.root_token')
+        case "$2" in
+            "vault")
+                vault ${@:3}
+                ;;
+            "yapi")
+                 yapi ${@:3}
+                ;;
+            "vars")
+                set +x
+                echo "Exporting variables for ${CLUSTER}"
+                echo "export VAULT_ADDR=\"${VAULT_ADDR}\""
+                echo "export VAULT_DATA=\"${VAULT_DATA}\""
+                echo "export VAULT_TOKEN=\"${VAULT_TOKEN}\""
+                ;;
+            *)
+            echo "Cli not implemented: $2"
+            exit 1   
+            esac
     ;;
     *)
     echo "Unknown command: $1"
