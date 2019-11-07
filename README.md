@@ -73,15 +73,9 @@ It uses an HAProxy instance in TCP mode by accessing the IP trough consul SRV DN
 
 This is handled by the `dc.sh` script:
 
-1. Create the docker networks
+- Create the docker networks
 ```bash
 $ docker network create {vault_primary,vault_secondary,vault_dr}
-```
-
-2. Create the Tavern data directory
-
-```bash
-$ mkdir -p tavern/vault/{primary,secondary,dr}
 ```
 
 ## Start the clusters
@@ -338,7 +332,7 @@ $ docker network inspect vault_${CLUSTER} | jq -r '.[] .Containers | with_entrie
 # TODO
 - [x] Initialization and Unsealing with `yapi`
 - [X] Configure primary as Performance replication
-- [] Configure DR cluster
+- [ ] Configure DR cluster
 - [X] Create replacement for Tavern
 - [X] Better startup handling
 - [ ] Add Vault container for PKI

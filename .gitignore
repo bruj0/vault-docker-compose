@@ -8,10 +8,10 @@ __pycache__
 .vscode
 secondary/consul/data
 secondary/vault/logs
-secondary/vault/api
+secondary/vault/api/*.json
 dr/consul/data
 dr/vault/logs
-dr/vault/api
+dr/vault/api/*.json
 vault/logs
-vault/api
+vault/api/*.json
 consul/data
