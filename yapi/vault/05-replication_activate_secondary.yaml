@@ -1,0 +1,24 @@
+---
+test_name: 05-Activate Secondary
+stages:
+  - name: 05-Activate Secondary
+    request:
+      url: "{env_vars.VAULT_ADDR}/v1/sys/replication/performance/secondary/enable"
+      method: POST
+      headers:
+        X-Vault-Token: "{env_vars.VAULT_TOKEN}"      
+      json:
+        token: "{ext.wrap_info_token}"
+        primary_api_addr: "http://{env_vars.SECONDARY_HAPROXY_ADDR}:8200"
+        $ext:
+          function: extensions.read_json
+          extra_kwargs:
+            path: "{env_vars.VAULT_DATA}/secondary-token.json"
+            sub_vars: True        
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: extensions.save_response
+          extra_kwargs:
+            path: "{env_vars.VAULT_DATA}/enable-secondary-resp.json"

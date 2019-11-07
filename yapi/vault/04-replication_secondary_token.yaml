@@ -9,6 +9,7 @@ stages:
         X-Vault-Token: "{env_vars.VAULT_TOKEN}"      
       json:
         id: "secondary"
+        ttl: "24h"
     response:
       status_code: 200
       save:

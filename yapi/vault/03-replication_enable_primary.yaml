@@ -1,18 +1,18 @@
 # To find out what IP to set to primary_cluster_addr 
-# $ docker network inspect vault_primary | jq -r '.[] .Containers | with_entries(select(.value.Name=="haproxy"))| .[] .IPv4Address' | awk -F "/" '{print $1}'
+# $ docker network inspect vault_secondary | jq -r '.[] .Containers | with_entries(select(.value.Name=="haproxy"))| .[] .IPv4Address' | awk -F "/" '{print $1}'
 # To use this test case
-# $ env VAULT_TOKEN=(cat primary/init.json | jq -r '.root_token') VAULT_ADDR=http://127.0.0.1:9201 PRIMARY_HAPROXY_ADDR=(docker network inspect vault_primary | jq -r '.[] .Containers | with_entries(select(.value.Name=="haproxy"))| .[] .IPv4Address' | awk -F "/" '{print $1}') tavern-ci test_replication.tavern.yaml --debug
+# $ env VAULT_TOKEN=(cat primary/init.json | jq -r '.root_token') VAULT_ADDR=http://127.0.0.1:9201 SECONDARY_HAPROXY_ADDR=(docker network inspect vault_secondary | jq -r '.[] .Containers | with_entries(select(.value.Name=="haproxy"))| .[] .IPv4Address' | awk -F "/" '{print $1}') tavern-ci test_replication.tavern.yaml --debug
 ---
 test_name: 01-Enable primary
 stages:
   - name: 01-Enable primary
     request:
       url: "{env_vars.VAULT_ADDR}/v1/sys/replication/performance/primary/enable"
-      method: POST
+      method: PUT
       headers:
         X-Vault-Token: "{env_vars.VAULT_TOKEN}"      
       json:
-        primary_cluster_addr: "{env_vars.PRIMARY_HAPROXY_ADDR}"
+        primary_cluster_addr: "https://{env_vars.SECONDARY_HAPROXY_ADDR}:8201"
     response:
       status_code: 200
 
