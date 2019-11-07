@@ -163,51 +163,53 @@ Each of this directories are mount at `/consul/data` inside the respective conta
     - `logs`: Where the audit logs will be stored.
 
 ### View the full compose template for a given cluster
+```bash
+$ export CLUSTER=primary|secondary|dr
+$ export VAULT_CLUSTER=${CLUSTER}
+$ export CONSUL_CLUSTER=${CLUSTER}
+$ export COMPOSE_PROJECT_NAME=${CLUSTER}
+$ docker-compose -f docker-compose.${CLUSTER}.yml -f docker-compose.yml up -d 
+```
 
-    ```
-    $ export CLUSTER=primary|secondary|dr
-    $ export VAULT_CLUSTER=${CLUSTER}
-    $ export CONSUL_CLUSTER=${CLUSTER}
-    $ export COMPOSE_PROJECT_NAME=${CLUSTER}
-    $ docker-compose -f docker-compose.${CLUSTER}.yml -f docker-compose.yml up -d 
-    ```
 ### Initialization of Vault
-    This will save the unseal keys and root token under the directory ```$CLUSTER_DIR}/vault/api```  as json files.
-    ```
-    $ export VAULT_ADDR=http://127.0.0.1:XXXX
-    $ export VAULT_data=$CLUSTER_DIR}/vault/api
-    $ yapi yapi/vault/01-init.yaml
-    ```
+This will save the unseal keys and root token under the directory ```$CLUSTER_DIR}/vault/api```  as json files.
+
+```bash
+$ export VAULT_ADDR=http://127.0.0.1:XXXX
+$ export VAULT_data=$CLUSTER_DIR}/vault/api
+$ yapi yapi/vault/01-init.yaml
+```
+
 ### Unsealing
-    ```
-    $ export VAULT_ADDR=http://127.0.0.1:XXXX
-    $ export VAULT_data=$CLUSTER_DIR}/vault/api
-    $ yapi yapi/vault/02-unseal.yaml
-    ```
+```bash
+$ export VAULT_ADDR=http://127.0.0.1:XXXX
+$ export VAULT_data=$CLUSTER_DIR}/vault/api
+$ yapi yapi/vault/02-unseal.yaml
+```
 ## Troubleshooting
 
 - Make sure the consul cluster is up and running:
-    ```
-    $ CONSUL_HTTP_ADDR=http://127.0.0.1:8500 consul members
-    $ CONSUL_HTTP_ADDR=http://127.0.0.1:8500 consul operator raft list-peers
-    $ docker logs -f primary_consul_server_bootstrap_1
-    ```
+```bash
+$ CONSUL_HTTP_ADDR=http://127.0.0.1:8500 consul members
+$ CONSUL_HTTP_ADDR=http://127.0.0.1:8500 consul operator raft list-peers
+$ docker logs -f primary_consul_server_bootstrap_1
+```
 - Check `haproxy` logs
-  ```
-  $ docker logs -f haproxy
-  ```
+```bash
+$ docker logs -f haproxy
+```
 
 ## Useful commands
 
 * How to use set the correct VAULT_TOKEN
 
-```
+```bash
 $ export VAULT_TOKEN=(cat $CLUSTER_DIR}/vault/api/init.json | jq -r '.root_token')
 ```
 
 * How to get the network IP of a container
 
-```
+```bash
 $ docker network inspect vault_${CLUSTER} | jq -r '.[] .Containers | with_entries(select(.value.Name=="CONTAINER_NAME"))| .[] .IPv4Address' | awk -F "/" '{print $1}'
 ```
 
