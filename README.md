@@ -162,7 +162,7 @@ Each of this directories are mount at `/consul/data` inside the respective conta
     - `api`: Where the response from the API is stored, ie unseal keys and root token
     - `logs`: Where the audit logs will be stored.
 
-    Execute:
+### View the full compose template for a given cluster
 
     ```
     $ export CLUSTER=primary|secondary|dr
@@ -171,14 +171,14 @@ Each of this directories are mount at `/consul/data` inside the respective conta
     $ export COMPOSE_PROJECT_NAME=${CLUSTER}
     $ docker-compose -f docker-compose.${CLUSTER}.yml -f docker-compose.yml up -d 
     ```
-- Initialization of Vault
+### Initialization of Vault
     This will save the unseal keys and root token under the directory ```$CLUSTER_DIR}/vault/api```  as json files.
     ```
     $ export VAULT_ADDR=http://127.0.0.1:XXXX
     $ export VAULT_data=$CLUSTER_DIR}/vault/api
     $ yapi yapi/vault/01-init.yaml
     ```
-- Unsealing
+### Unsealing
     ```
     $ export VAULT_ADDR=http://127.0.0.1:XXXX
     $ export VAULT_data=$CLUSTER_DIR}/vault/api
