@@ -143,11 +143,25 @@ Last WAL        257
 ## How `dc.sh` works
 *This is all automated with the `up` command and its here for documentation purposes.*
 
-- To bring up the docker containers, go to the directory for the cluster:
+- Each cluster has its own directory:
   * Primary -> /
   * Secondary -> secondary
   * DR -> dr
-  
+- Each directory has this structure:
+  - `consul`
+    - `data`
+
+This will contain the directories where each consul server will store its data:
+`consul01 consul02 consul03`.
+
+Each of this directories are mount at `/consul/data` inside the respective container
+
+  - `config` : This is mounted inside the containers as /consul/config
+  - `vault`
+    - `config`: Mounted at `/vault/config` 
+    - `api`: Where the response from the API is stored, ie unseal keys and root token
+    - `logs`: Where the audit logs will be stored.
+
     Execute:
 
     ```
@@ -158,19 +172,17 @@ Last WAL        257
     $ docker-compose -f docker-compose.${CLUSTER}.yml -f docker-compose.yml up -d 
     ```
 - Initialization of Vault
-    This will save the unseal keys and root token under the directory ```tavern/vault/${VAULT_CLUSTER}```  as json files.
+    This will save the unseal keys and root token under the directory ```$CLUSTER_DIR}/vault/api```  as json files.
     ```
-    $ cd tavern/vault
     $ export VAULT_ADDR=http://127.0.0.1:XXXX
-    $ export VAULT_CLUSTER=primary|secondary|dr
-    $ tavern-ci test_init.tavern.yaml 
+    $ export VAULT_data=$CLUSTER_DIR}/vault/api
+    $ yapi yapi/vault/01-init.yaml
     ```
-- Unsealing, go to the `tavern/vault` directory and execute
+- Unsealing
     ```
-    $ export VAULT_CLUSTER=${CLUSTER}
-    $ VAULT_ADDR="http://127.0.0.1:${port}"
-    $ tavern-ci test_unseal.tavern.yaml --debug
-    $ tavern-ci test_init.tavern.yaml --debug
+    $ export VAULT_ADDR=http://127.0.0.1:XXXX
+    $ export VAULT_data=$CLUSTER_DIR}/vault/api
+    $ yapi yapi/vault/02-unseal.yaml
     ```
 ## Troubleshooting
 
@@ -190,7 +202,7 @@ Last WAL        257
 * How to use set the correct VAULT_TOKEN
 
 ```
-$ export VAULT_TOKEN=(cat tavern/${CLUSTER}/init.json | jq -r '.root_token')
+$ export VAULT_TOKEN=(cat $CLUSTER_DIR}/vault/api/init.json | jq -r '.root_token')
 ```
 
 * How to get the network IP of a container
@@ -198,9 +210,6 @@ $ export VAULT_TOKEN=(cat tavern/${CLUSTER}/init.json | jq -r '.root_token')
 ```
 $ docker network inspect vault_${CLUSTER} | jq -r '.[] .Containers | with_entries(select(.value.Name=="CONTAINER_NAME"))| .[] .IPv4Address' | awk -F "/" '{print $1}'
 ```
-
-
-
 
 
 ## Exposed ports: local -> container
@@ -219,11 +228,11 @@ $ docker network inspect vault_${CLUSTER} | jq -r '.[] .Containers | with_entrie
 - 8819 -> 1936 (HAProxy stats)
 
 # TODO
-- [x] Initialization and Unsealing with tavern
-- [X] Configure Perfomance replication
-- [X] Configure DR cluster
-- [ ] Create replacement for Tavern
-- [ ] Better startup handling
+- [x] Initialization and Unsealing with `yapi`
+- [X] Configure primary as Performance replication
+- [] Configure DR cluster
+- [X] Create replacement for Tavern
+- [X] Better startup handling
 - [ ] Add Vault container for PKI
 - [ ] Generate PKI certificates and use them
 - [ ] Configure Monitoring
