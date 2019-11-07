@@ -1,0 +1,17 @@
+---
+test_name: 01-Init Vault
+stages:
+  - name: 01-Init Vault
+    request:
+      url: "{env_vars.VAULT_ADDR}/v1/sys/init"
+      method: PUT
+      json:
+        secret_shares: 1
+        secret_threshold: 1
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: extensions.save_response
+          extra_kwargs:
+            path: "{env_vars.VAULT_DATA}/init.json"

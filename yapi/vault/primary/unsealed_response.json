@@ -1,0 +1,1 @@
+{"type": "shamir", "initialized": true, "sealed": false, "t": 1, "n": 1, "progress": 0, "nonce": "", "version": "1.2.3+prem", "migration": false, "cluster_name": "Primary", "cluster_id": "a10b1027-e814-3b46-ae07-55581008e1eb", "recovery_seal": false}
