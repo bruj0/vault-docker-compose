@@ -7,12 +7,12 @@ test_name: 01-Enable primary
 stages:
   - name: 01-Enable primary
     request:
-      url: "{tavern.env_vars.VAULT_ADDR}/v1/sys/replication/performance/primary/enable"
+      url: "{env_vars.VAULT_ADDR}/v1/sys/replication/performance/primary/enable"
       method: POST
       headers:
-        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"      
+        X-Vault-Token: "{env_vars.VAULT_TOKEN}"      
       json:
-        primary_cluster_addr: "{tavern.env_vars.PRIMARY_HAPROXY_ADDR}"
+        primary_cluster_addr: "{env_vars.PRIMARY_HAPROXY_ADDR}"
     response:
       status_code: 200
 

@@ -22,30 +22,30 @@ To be able to easily setup and test different configuration and features of a fu
 * Docker-compose:
   *  Scheduling of containers
   *  Overlaying of configuration to avoid duplication
-* [Tavern-ci](https://taverntesting.github.io/) (currently being replaced with `yapi`)
+* [Yapi-ci](https://github.com/bruj0/yapi)
   * Initialization
   * API management
 * Access to Premium or Pro version of Vault
 * `vault` and `jq` binaries installed in the $PATH
  
      
-To talk to Vault we will use `Tavern-ci`, this is a yaml file where we define how the API call will look lik.
+To talk to Vault we will use `Yapi-ci`, this is a yaml file where we define how the API call will look like.
 
 The benefits over a bash script using `curl` is that we can manipulate the response and its very clear what the call does.
 
-You can take a look at them under `tavern/vault`, for example:
+You can take a look at them under `yapi/vault`, for example:
 ```yaml
 ---
 test_name: 01-Enable primary
 stages:
   - name: 01-Enable primary
     request:
-      url: "{tavern.env_vars.VAULT_ADDR}/v1/sys/replication/performance/primary/enable"
+      url: "{env_vars.VAULT_ADDR}/v1/sys/replication/performance/primary/enable"
       method: POST
       headers:
-        X-Vault-Token: "{tavern.env_vars.VAULT_TOKEN}"      
+        X-Vault-Token: "{env_vars.VAULT_TOKEN}"      
       json:
-        primary_cluster_addr: "{tavern.env_vars.PRIMARY_HAPROXY_ADDR}"
+        primary_cluster_addr: "{env_vars.PRIMARY_HAPROXY_ADDR}"
     response:
       status_code: 200
 ```
@@ -87,7 +87,7 @@ $ mkdir -p tavern/vault/{primary,secondary,dr}
 3. Start the clusters
 ```
 $ CLUSTER=primary ./dc.sh up
-$ CLUSTER=primary ./dc.sh proxy start
+$ ./dc.sh proxy start
 $ CLUSTER=secondary ./dc.sh up
 ```
 ### TODO
@@ -114,12 +114,17 @@ HA Cluster      https://172.24.0.9:8201
 HA Mode         active
 Last WAL        257
 ```
+- `config`
+  - Will execute `docker-compose config` with the proper templates 
 - `up`
   - This will start the Vault and Consul cluster up for the specified type of cluster by doing a `docker-compose up -d`
 
 - `down`
   - It will do a `docker-compose down` with the correct template
-  - 
+
+- `wipe`
+  - Will wipe the consul data files, make sure to do it after `down`
+
 - `restart`
   - vault
   - consul

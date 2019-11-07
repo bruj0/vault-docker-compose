@@ -1,18 +1,16 @@
 ---
+test_name: 01-Unseal Vault
 stages:
   - name: 01-Unseal Vault
     request:
-      url: "{env_vars.VAULT_ADDR}"
+      url: "{env_vars.VAULT_ADDR}/v1/sys/unseal"
       method: PUT
-      headers:
-        X-Vault-Token: "{env_vars.VAULT_TOKEN}"      
       json:
-        keys: "{ext.keys_0}"
-        key2: val2
+        key: "{ext.keys_0}"
         $ext:
           function: extensions.read_json
           extra_kwargs:
-            path: "data/{env_vars.VAULT_CLUSTER}/init.json"
+            path: "{env_vars.VAULT_DATA}/init.json"
             sub_vars: True
     response:
       status_code: 200
@@ -20,5 +18,4 @@ stages:
         $ext:
           function: extensions.save_response
           extra_kwargs:
-            path: "data/{env_vars.VAULT_CLUSTER}/unsealed_response.json"
-            key: "headers"
+            path: "{env_vars.VAULT_DATA}/unsealed_response.json"
