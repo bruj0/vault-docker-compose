@@ -1,7 +1,7 @@
 ---
-test_name: 05-Activate Secondary
+test_name: Activate Secondary
 stages:
-  - name: 05-Activate Secondary
+  - name: Activate Secondary
     request:
       url: "{env_vars.VAULT_ADDR}/v1/sys/replication/performance/secondary/enable"
       method: POST

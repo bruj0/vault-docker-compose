@@ -3,9 +3,9 @@
 # To use this test case
 # $ env VAULT_TOKEN=(cat primary/init.json | jq -r '.root_token') VAULT_ADDR=http://127.0.0.1:9201 SECONDARY_HAPROXY_ADDR=(docker network inspect vault_secondary | jq -r '.[] .Containers | with_entries(select(.value.Name=="haproxy"))| .[] .IPv4Address' | awk -F "/" '{print $1}') tavern-ci test_replication.tavern.yaml --debug
 ---
-test_name: 01-Enable primary
+test_name: Enable primary
 stages:
-  - name: 01-Enable primary
+  - name: Enable primary
     request:
       url: "{env_vars.VAULT_ADDR}/v1/sys/replication/performance/primary/enable"
       method: PUT

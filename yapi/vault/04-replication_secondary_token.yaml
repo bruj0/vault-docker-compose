@@ -1,7 +1,7 @@
 ---
-test_name: 01-Create secondary-token
+test_name: Create secondary-token
 stages:
-  - name: 01-Create secondary-token
+  - name: Create secondary-token
     request:
       url: "{env_vars.VAULT_ADDR}/v1/sys/replication/performance/primary/secondary-token"
       method: POST

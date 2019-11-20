@@ -1,0 +1,61 @@
+#https://www.vaultproject.io/api/system/generate-root.html
+---
+test_name: Root token generation
+stages:
+  - name: 01-Start root token generation
+    request:
+      url: "{env_vars.VAULT_ADDR}/v1/sys/generate-root/attempt"
+      method: PUT
+      headers:
+        X-Vault-Token: "{env_vars.VAULT_TOKEN}"
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: extensions.save_response
+          extra_kwargs:
+            path: "{env_vars.VAULT_DATA}/06-01-generate-root.json"
+#Save the nonce and otp for the next call
+      body:
+        nonce: nonce
+        otp: otp
+  - name: 02-Provide key share and nonce
+    request:
+      url: "{env_vars.VAULT_ADDR}/v1/sys/generate-root/update"
+      method: PUT
+      headers:
+        X-Vault-Token: "{env_vars.VAULT_TOKEN}"
+      json:
+        $ext:
+          function: extensions.read_json
+          extra_kwargs:
+            path: "{env_vars.VAULT_DATA_KEYS}/init.json"
+            sub_vars: True
+# 'keys' is a reserved keyword in python so it gets renamed to _keys
+        key: "ext._keys.to_list()[0]"
+        nonce: resp.nonce
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: extensions.save_response
+          extra_kwargs:
+            path: "{env_vars.VAULT_DATA}/06-02-generate-root.json"
+#Save the nonce and otp for the next call
+      body:
+        encoded_token: encoded_token
+  - name: 03-Get decoded root token
+    request:
+      url: "{env_vars.VAULT_ADDR}/v1/sys/generate-root/attempt"
+      method: GET
+      headers:
+        X-Vault-Token: "{env_vars.VAULT_TOKEN}"
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: extensions.decode_vault_token
+          extra_kwargs:
+            path: "{env_vars.VAULT_DATA}/06-03-generate-root.json" 
+            encoded: resp.encoded_token
+            otp: resp.otp
