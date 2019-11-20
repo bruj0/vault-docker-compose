@@ -85,9 +85,9 @@ $ ./dc.sh proxy start
 $ CLUSTER=secondary ./dc.sh up
 ```
 
-## Configure performance replication
+## How to configure performance replication
 
-- Set the correct environmental variables, you can get them from the output of this command.
+1. Set the correct environmental variables, you can get them from the output of this command.
 ```bash
 $ env CLUSTER=primary ./dc.sh cli vars
 Exporting variables for primary
@@ -95,7 +95,7 @@ export VAULT_ADDR="http://127.0.0.1:9201"
 export VAULT_DATA="./vault/api"
 export VAULT_TOKEN="s.YFfiUgyPCZAtJIQ55NtvVa2K"
 ```
-- Enable replication
+2. Enable replication
   
 `SECONDARY_HAPROXY_ADDR` is the IP of the network card in the `proxy` container that is connected to the network `vault_secondary`.
 
@@ -107,7 +107,7 @@ It will be configured as the `primary_cluster_addr` variable in Vault.
 $ export SECONDARY_HAPROXY_ADDR=(docker network inspect vault_secondary | jq -r '.[] .Containers | with_entries(select(.value.Name=="haproxy"))| .[] .IPv4Address' | awk -F "/" '{print $1}')
 $ CLUSTER=primary ./dc.sh cli yapi yapi/vault/03-replication_enable_primary.yaml
 ```
-- Check that the replication was configured correctly:
+3. Check that the replication was configured correctly:
 
 ```json
 $ CLUSTER=primary ./dc.sh cli vault read sys/replication/status -format=json
@@ -137,7 +137,7 @@ $ CLUSTER=primary ./dc.sh cli vault read sys/replication/status -format=json
 }
 ```
 
-- Create secondary token
+4. Create secondary token
   
 This will save the token to `vault/api/secondary-token.json` and create it with the `id=secondary`
 
@@ -145,7 +145,7 @@ This will save the token to `vault/api/secondary-token.json` and create it with 
 $ CLUSTER=primary ./dc.sh cli yapi yapi/vault/04-replication_secondary_token.yaml
 ```
 
-- Enable replication on the secondary cluster
+5. Enable replication on the secondary cluster
 
 We dont use `cli yapi` because we are mixing the Vault address of the secondary with the data of the primary.
 
@@ -156,7 +156,7 @@ $ yapi yapi/vault/04-replication_secondary_token.yaml
 ```
 This will save the response to `vault/api/enable-secondary-resp.json`
 
-- Check that the replication is working on the secondary
+6. Check that the replication is working on the secondary
 
 ```json
 $ env DEBUG=false CLUSTER=secondary ./dc.sh cli vault read sys/replication/status -format=json

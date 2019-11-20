@@ -1,7 +1,7 @@
 ---
-test_name: 01-Init Vault
+test_name: Init Vault
 stages:
-  - name: 01-Init Vault
+  - name: Init Vault
     request:
       url: "{env_vars.VAULT_ADDR}/v1/sys/init"
       method: PUT
