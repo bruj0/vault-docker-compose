@@ -85,6 +85,38 @@ $ ./dc.sh proxy start
 $ CLUSTER=secondary ./dc.sh up
 ```
 
+## Start replication
+```bash
+$ CLUSTER=primary ./dc.sh enable_secondary
+```
+## Check that replication is up
+```bash
+$ env CLUSTER=primary ./dc.sh cli vault read sys/replication/performance/status
+Key                     Value
+---                     -----
+cluster_id              2cc7aad6-026a-9620-6f0d-1e8fa939a11e
+known_secondaries       [secondary]
+last_reindex_epoch      0
+last_wal                247
+merkle_root             d85e48c2ec44b1e6ba6671773ea26d836b64ed09
+mode                    primary
+primary_cluster_addr    https://172.25.0.2:8201
+state                   running
+
+$ env CLUSTER=secondary ./dc.sh cli vault read sys/replication/performance/status
+Key                            Value
+---                            -----
+cluster_id                     2cc7aad6-026a-9620-6f0d-1e8fa939a11e
+known_primary_cluster_addrs    [https://172.24.0.8:8201 https://172.24.0.9:8201 https://172.24.0.10:8201]
+last_reindex_epoch             1574351423
+last_remote_wal                0
+merkle_root                    d85e48c2ec44b1e6ba6671773ea26d836b64ed09
+mode                           secondary
+primary_cluster_addr           https://172.25.0.2:8201
+secondary_id                   secondary
+state                          stream-wals
+```
+
 ## How to configure performance replication
 
 1. Set the correct environmental variables, you can get them from the output of this command.
