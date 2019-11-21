@@ -6,8 +6,6 @@ stages:
     request:
       url: "{env_vars.VAULT_ADDR}/v1/sys/generate-root/attempt"
       method: PUT
-      headers:
-        X-Vault-Token: "{env_vars.VAULT_TOKEN}"
     response:
       status_code: 200
       save:
@@ -23,8 +21,6 @@ stages:
     request:
       url: "{env_vars.VAULT_ADDR}/v1/sys/generate-root/update"
       method: PUT
-      headers:
-        X-Vault-Token: "{env_vars.VAULT_TOKEN}"
       json:
         $ext:
           function: extensions.read_json
@@ -56,6 +52,6 @@ stages:
         $ext:
           function: extensions.decode_vault_token
           extra_kwargs:
-            path: "{env_vars.VAULT_DATA}/06-03-generate-root.json" 
+            path: "{env_vars.VAULT_DATA}/init.json" 
             encoded: resp.encoded_token
             otp: resp.otp

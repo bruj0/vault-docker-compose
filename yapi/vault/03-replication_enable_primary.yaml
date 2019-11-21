@@ -14,5 +14,5 @@ stages:
       json:
         primary_cluster_addr: "https://{env_vars.SECONDARY_HAPROXY_ADDR}:8201"
     response:
-      status_code: 200
+      status_code: 204
 

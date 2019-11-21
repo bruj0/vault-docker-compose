@@ -139,6 +139,26 @@ case "$1" in
         vault_unseal
     ;;
 
+    "enable_secondary")
+        export VAULT_TOKEN=$(cat ${VAULT_DATA}/init.json | jq -r '.root_token')
+        export SECONDARY_HAPROXY_ADDR=$(docker network inspect vault_secondary | jq -r '.[] .Containers | with_entries(select(.value.Name=="haproxy"))| .[] .IPv4Address' | awk -F "/" '{print $1}')
+
+        echo "Enabling replication in primary"
+        yapi yapi/vault/03-replication_enable_primary.yaml --debug
+
+        echo "Creating secondary JWT token id=secondary"
+        yapi yapi/vault/04-replication_secondary_token.yaml --debug
+        
+        echo "Enabling secondary replication to primary"
+        VAULT_TOKEN_SEC=$(cat secondary/${VAULT_DATA}/init.json | jq -r '.root_token')
+        VAULT_ADDR=http://127.0.0.1:9301 VAULT_TOKEN=${VAULT_TOKEN_SEC} \
+        yapi yapi/vault/05-replication_activate_secondary.yaml --debug
+
+        echo "Creating a root token for secondary with the new unseal keys"
+        VAULT_ADDR=http://127.0.0.1:9301 VAULT_DATA_KEYS="vault/api" \
+        yapi yapi/vault/06-replication_generate_root_secondary.yaml --debug
+    
+    ;;
     "down")
 #down command
 #also initializes if there is no init.json under yapi/vault/$CLUSTER
