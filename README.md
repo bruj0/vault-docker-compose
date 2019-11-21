@@ -90,7 +90,8 @@ $ CLUSTER=secondary ./dc.sh up
 ```
 
 ## Start replication
-If you want to do it go [here](#how-to-manually-configure-performance-replication): 
+If you want to do it manually go [here](#how-to-manually-configure-performance-replication): 
+
 ```bash
 $ CLUSTER=primary ./dc.sh enable_secondary
 ```
