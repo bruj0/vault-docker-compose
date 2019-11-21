@@ -70,12 +70,16 @@ It uses an HAProxy instance in TCP mode by accessing the IP trough consul SRV DN
 
 ## Initial configuration
 
-
-This is handled by the `dc.sh` script:
-
 - Create the docker networks
 ```bash
 $ docker network create {vault_primary,vault_secondary,vault_dr}
+```
+## Install yapi
+
+```bash
+$ pip install -U yapi-ci
+$ yapi --version
+0.1.6
 ```
 
 ## Start the clusters
@@ -86,6 +90,7 @@ $ CLUSTER=secondary ./dc.sh up
 ```
 
 ## Start replication
+If you want to do it go [here](#how-to-manually-configure-performance-replication): 
 ```bash
 $ CLUSTER=primary ./dc.sh enable_secondary
 ```
@@ -117,7 +122,79 @@ secondary_id                   secondary
 state                          stream-wals
 ```
 
-## How to configure performance replication
+### Commands supported
+All the commands read the `CLUSTER` variable to determine where is the operation going to run on.
+
+Example:
+```bash
+$ CLUSTER=primary ./dc.sh cli vault status
+Key             Value
+---             -----
+Seal Type       shamir
+Initialized     true
+Sealed          false
+Total Shares    1
+Threshold       1
+Version         1.2.3+prem
+Cluster Name    Primary
+Cluster ID      a10b1027-e814-3b46-ae07-55581008e1eb
+HA Enabled      true
+HA Cluster      https://172.24.0.9:8201
+HA Mode         active
+Last WAL        257
+```
+- `config`: Will execute `docker-compose config` with the proper templates 
+- `up`: This will start the Vault and Consul cluster up for the specified type of cluster by doing a `docker-compose up -d`
+
+- `down`: It will do a `docker-compose down` with the correct template
+
+- `wipe`: Will wipe ALL the consul data files, make sure to do it after `down`
+
+- `restart`
+  - vault
+  - consul
+  - proxy
+
+- `cli`: This will set the variables `VAULT_TOKEN` from `vault/api/init.json` and `VAULT_ADDR` to the port of the first node of the selected cluster.
+  - `vars`: Prints variables for the given cluster 
+```bash
+$ env CLUSTER=primary ./dc.sh cli vars                                                                                        Exporting variables for primary
+export VAULT_ADDR="http://127.0.0.1:9201"
+export VAULT_DATA="./vault/api"
+export VAULT_TOKEN="s.YFfiUgyPCZAtJIQ55NtvVa2K"
+```
+  - `vault <command>`
+  - `yapi <template file>[--debug]`
+
+- `unseal`
+  - replication: if this argument is given the primary unseal key will be used instead
+
+- `proxy`
+  - start
+
+## How `dc.sh` works
+*This is all automated with the `up` command and its here for documentation purposes.*
+
+- Each cluster has its own directory:
+  * Primary -> /
+  * Secondary -> secondary
+  * DR -> dr
+- Each directory has this structure:
+  - `consul`
+    - `data`
+
+This will contain the directories where each consul server will store its data:
+`consul01 consul02 consul03`.
+
+Each of this directories are mount at `/consul/data` inside the respective container
+
+  - `config` : This is mounted inside the containers as /consul/config
+  - `vault`
+    - `config`: Mounted at `/vault/config` 
+    - `api`: Where the response from the API is stored, ie unseal keys and root token
+    - `logs`: Where the audit logs will be stored.
+
+## How to manually configure performance replication
 
 1. Set the correct environmental variables, you can get them from the output of this command.
 ```bash
@@ -221,79 +298,6 @@ $ env DEBUG=false CLUSTER=secondary ./dc.sh cli vault read sys/replication/statu
   "warnings": null
 }
 ```
-
-
-### Other commands supported
-All the commands read the `CLUSTER` variable to determine where is the operation going to run on.
-
-Example:
-```bash
-$ CLUSTER=primary ./dc.sh cli vault status
-Key             Value
----             -----
-Seal Type       shamir
-Initialized     true
-Sealed          false
-Total Shares    1
-Threshold       1
-Version         1.2.3+prem
-Cluster Name    Primary
-Cluster ID      a10b1027-e814-3b46-ae07-55581008e1eb
-HA Enabled      true
-HA Cluster      https://172.24.0.9:8201
-HA Mode         active
-Last WAL        257
-```
-- `config`: Will execute `docker-compose config` with the proper templates 
-- `up`: This will start the Vault and Consul cluster up for the specified type of cluster by doing a `docker-compose up -d`
-
-- `down`: It will do a `docker-compose down` with the correct template
-
-- `wipe`: Will wipe the consul data files, make sure to do it after `down`
-
-- `restart`
-  - vault
-  - consul
-  - proxy
-
-- `cli`: This will set the variables `VAULT_TOKEN` from `vault/api/init.json` and `VAULT_ADDR` to the port of the first node of the selected cluster.
-  - `vars`: Prints variables for the given cluster 
-```bash
-$ env CLUSTER=primary ./dc.sh cli vars                                                                                        Exporting variables for primary
-export VAULT_ADDR="http://127.0.0.1:9201"
-export VAULT_DATA="./vault/api"
-export VAULT_TOKEN="s.YFfiUgyPCZAtJIQ55NtvVa2K"
-```
-  - `vault <command>`
-  - `yapi <template file>[--debug]`
-
-- `unseal`
-  - replication: if this argument is given the primary unseal key will be used instead
-
-- `proxy`
-  - start
-
-## How `dc.sh` works
-*This is all automated with the `up` command and its here for documentation purposes.*
-
-- Each cluster has its own directory:
-  * Primary -> /
-  * Secondary -> secondary
-  * DR -> dr
-- Each directory has this structure:
-  - `consul`
-    - `data`
-
-This will contain the directories where each consul server will store its data:
-`consul01 consul02 consul03`.
-
-Each of this directories are mount at `/consul/data` inside the respective container
-
-  - `config` : This is mounted inside the containers as /consul/config
-  - `vault`
-    - `config`: Mounted at `/vault/config` 
-    - `api`: Where the response from the API is stored, ie unseal keys and root token
-    - `logs`: Where the audit logs will be stored.
 
 ### View the full compose template for a given cluster
 ```bash
