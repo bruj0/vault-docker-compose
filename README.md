@@ -150,9 +150,10 @@ $ CLUSTER=primary ./dc.sh cli yapi yapi/vault/04-replication_secondary_token.yam
 We dont use `cli yapi` because we are mixing the Vault address of the secondary with the data of the primary.
 
 ```bash
-$ export VAULT_DATA="./vault/api"
+$ export VAULT_TOKEN=$(cat secondary/vault/api/init.json | jq -r '.root_token')
+$ export VAULT_DATA="vault/api"
 $ export VAULT_ADDR="http://127.0.0.1:9301"
-$ yapi yapi/vault/04-replication_secondary_token.yaml
+$ yapi yapi/vault/05-replication_activate_secondary.yaml
 ```
 This will save the response to `vault/api/enable-secondary-resp.json`
 
