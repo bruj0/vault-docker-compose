@@ -4,6 +4,8 @@ networks:
     external: true
   vault_secondary:
     external: true
+  vault_dr:
+    external: true    
 
 services:
   haproxy:
@@ -12,10 +14,12 @@ services:
     networks:
       - vault_primary
       - vault_secondary
+      - vault_dr
     environment:
       - LOG_LEVEL=debug
     ports:
       - "8801:8200"
+      - "8901:9200"
       - "8819:1936"
     volumes:
     - "./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro"

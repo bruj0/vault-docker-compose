@@ -358,13 +358,19 @@ $ docker network inspect vault_${CLUSTER} | jq -r '.[] .Containers | with_entrie
 - 9201 -> 8200 (Vault01 API and UI)
 - 9202 -> 8200 (Vault02 API and UI)
 - 9203 -> 8200 (Vault03 API and UI)
-### Secondary
--  8502 -> 8500 (Consul bootstrap server UI)
--  9301 -> 8200 (Vault01 API and UI)
--  9302 -> 8200 (Vault02 API and UI)
--  9303 -> 8200 (Vault03 API and UI)
+### Secondary (DR primary)
+- 8502 -> 8500 (Consul bootstrap server UI)
+- 9301 -> 8200 (Vault01 API and UI)
+- 9302 -> 8200 (Vault02 API and UI)
+- 9303 -> 8200 (Vault03 API and UI)
+### DR Secondary
+- 8503 -> 8500 (Consul bootstrap server UI)
+- 9401 -> 8200 (Vault01 API and UI)
+- 9402 -> 8200 (Vault01 API and UI)
+- 9403 -> 8200 (Vault01 API and UI)
 ### Proxy
 - 8801 -> 8200 ( Primary cluster, Active Vault node API )
+- 8901 -> 8200 ( DR Primary, Secondary cluster, Active Vault node API)
 - 8819 -> 1936 (HAProxy stats)
 
 # TODO

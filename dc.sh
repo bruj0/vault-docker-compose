@@ -176,15 +176,22 @@ case "$1" in
     "restart")
 # Restart command
 # if service start with vault then run vaul_seal func.
-        if [[ $2 == vault ]]; then
-            ${COMPOSE_CMD} restart vault01 vault02 vault03
-            pwd=$(pwd)
-            cd ${ROOT}/yapi/vault
-            vault_unseal
-            cd ${pwd}
-        else
-            ${COMPOSE_CMD} restart $2
-        fi
+        case "$2" in
+            "vault")
+                ${COMPOSE_CMD} restart vault01 vault02 vault03
+                pwd=$(pwd)
+                cd ${ROOT}/yapi/vault
+                vault_unseal
+                cd ${pwd}
+            ;;
+            "proxy")
+                cd proxy
+                docker-compose restart
+            ;;
+            *)
+                ${COMPOSE_CMD} restart $2
+            ;;
+        esac
     ;;
     "unseal")
 # unseal command
