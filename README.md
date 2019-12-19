@@ -342,6 +342,8 @@ $ docker network inspect vault_${CLUSTER} | jq -r '.[] .Containers | with_entrie
 - 9201 -> 8200 (Vault01 API and UI)
 - 9202 -> 8200 (Vault02 API and UI)
 - 9203 -> 8200 (Vault03 API and UI)
+- 9204 -> 9090 (Prometheus)
+- 9205 -> 3000 (Grafana)
 ### Secondary (DR primary)
 - 8502 -> 8500 (Consul bootstrap server UI)
 - 9301 -> 8200 (Vault01 API and UI)
@@ -358,12 +360,14 @@ $ docker network inspect vault_${CLUSTER} | jq -r '.[] .Containers | with_entrie
 - 8819 -> 1936 (HAProxy stats)
 
 # TODO
-- [x] Initialization and Unsealing with `yapi`
-- [X] Configure primary as Performance replication
 - [ ] Configure DR cluster
-- [X] Create replacement for Tavern
-- [X] Better startup handling
+- [ ] Configure Monitoring
 - [ ] Add Vault container for PKI
 - [ ] Generate PKI certificates and use them
-- [ ] Configure Monitoring
 - [ ] HSM auto unsealing
+
+# Done
+- [x] Initialization and Unsealing with `yapi`
+- [X] Configure primary as Performance replication
+- [X] Create replacement for Tavern
+- [X] Better startup handling
