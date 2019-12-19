@@ -128,22 +128,12 @@ All the commands read the `CLUSTER` variable to determine where is the operation
 
 Example:
 ```bash
-$ CLUSTER=primary ./dc.sh cli vault status
-Key             Value
----             -----
-Seal Type       shamir
-Initialized     true
-Sealed          false
-Total Shares    1
-Threshold       1
-Version         1.2.3+prem
-Cluster Name    Primary
-Cluster ID      a10b1027-e814-3b46-ae07-55581008e1eb
-HA Enabled      true
-HA Cluster      https://172.24.0.9:8201
-HA Mode         active
-Last WAL        257
+$ env CLUSTER=primary ./dc.sh cli vars                                                                                        Exporting variables for primary
+export VAULT_ADDR="http://127.0.0.1:9201"
+export VAULT_DATA="./vault/api"
+export VAULT_TOKEN="s.YFfiUgyPCZAtJIQ55NtvVa2K"
 ```
+- `help` : This help
 - `config`: Will execute `docker-compose config` with the proper templates 
 - `up`: This will start the Vault and Consul cluster up for the specified type of cluster by doing a `docker-compose up -d`
 
@@ -158,12 +148,6 @@ Last WAL        257
 
 - `cli`: This will set the variables `VAULT_TOKEN` from `vault/api/init.json` and `VAULT_ADDR` to the port of the first node of the selected cluster.
   - `vars`: Prints variables for the given cluster 
-```bash
-$ env CLUSTER=primary ./dc.sh cli vars                                                                                        Exporting variables for primary
-export VAULT_ADDR="http://127.0.0.1:9201"
-export VAULT_DATA="./vault/api"
-export VAULT_TOKEN="s.YFfiUgyPCZAtJIQ55NtvVa2K"
-```
   - `vault <command>`
   - `yapi <template file>[--debug]`
 

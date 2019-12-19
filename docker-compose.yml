@@ -1,5 +1,8 @@
 version: '3'
-
+volumes:
+  prometheus_data: {}
+  grafana_data: {}
+  
 services:
   consul_agent_1: &consul_agent
     image: consul:1.6.1
@@ -68,3 +71,43 @@ services:
     depends_on:
       - consul_agent_3   
     command: vault server -config=/vault/config/vault03.hcl 
+## Prometheus Stack
+## Based on https://github.com/vegasbrianc/prometheus
+  prometheus: &prometheus
+    image: prom/prometheus:v2.14.0
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--log.level=debug'
+    # ports:
+    #   - 9090:9090
+    restart: always
+  
+  # cadvisor: &cadvisor
+  #   image: gcr.io/google-containers/cadvisor:v0.34.0
+  #   volumes:
+  #     - /:/rootfs:ro
+  #     - /var/run:/var/run:rw
+  #     - /sys:/sys:ro
+  #     - /var/lib/docker/:/var/lib/docker:ro
+  #     - /dev/disk/:/dev/disk:ro
+  #   # ports:
+  #   #   - 8080:8080
+  #   restart: always
+
+  grafana: &grafana
+    image: grafana/grafana:6.5.2
+    user: "104"
+    depends_on:
+       - prometheus
+    # ports:
+    #   - 3000:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+    env_file:
+      - ./grafana/config.monitoring
+    restart: always

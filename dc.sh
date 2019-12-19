@@ -9,7 +9,7 @@ function vault_unseal {
         export VAULT_DATA="vault/api"
     fi
     for port in "${var[@]}"; do
-        VAULT_ADDR="http://127.0.0.1:${port}" yapi yapi/vault/02-unseal.yaml --debug
+        VAULT_ADDR="http://127.0.0.1:${port}" yapi yapi/vault/02-unseal.yaml
     done
 }
 # Enable debug if the env variable DEBUG is set to true
@@ -59,13 +59,30 @@ esac
 
 export VAULT_DATA="${CLUSTER_DIR}/vault/api"
 COMPOSE_CMD="docker-compose -f ${CLUSTER_DIR}/docker-compose.${CLUSTER}.yml -f docker-compose.yml"
-
+bold=$(tput bold)
+normal=$(tput sgr0)
 
 
 #Main logic
 #wipe command
 #deletes consul data directories
 case "$1" in
+    "help")
+        echo "${bold}Usage: dc.sh <command> <subcommand>${normal}"
+        echo ""
+        echo "${bold}config${normal}: Will execute docker-compose config with the proper templates "
+        echo "${bold}up${normal}: This will start the Vault and Consul cluster up for the specified type of cluster by doing a docker-compose up -d"
+        echo "${bold}down${normal}: It will do a docker-compose down with the correct template"
+        echo "${bold}wipe${normal}: Will wipe ALL the consul data files, make sure to do it after down"
+        echo "${bold}restart${normal}: Restart the service"
+        echo "   Subcommands: vault | consul | proxy"
+        echo "${bold}cli${normal}: This will set the variables VAULT_TOKEN from vault/api/init.json and VAULT_ADDR to the port of the first node of the selected cluster."
+        echo "       Subcommands: vars Prints variables for the given cluster "
+        echo "${bold}vault${normal} <command>"
+        echo "${bold}yapi${normal} <template file>[--debug]"
+        echo "${bold}unseal${normal}"
+        echo "   Subcommands:  replication if this argument is given the primary unseal key will be used instead"
+    ;;
     "config")
         ${COMPOSE_CMD} config
     ;;
@@ -129,11 +146,20 @@ case "$1" in
         echo "Waiting for startup"
         sleep ${SLEEP_TIME}
 
+        echo "Starting Prometheus"
+        ${COMPOSE_CMD} up -d prometheus ${RECREATE}
+        echo "Waiting for startup"
+        sleep ${SLEEP_TIME}
+
+        echo "Starting Grafana"
+        ${COMPOSE_CMD} up -d grafana ${RECREATE}
+        echo "Waiting for startup"
+        sleep ${SLEEP_TIME}        
 
         # Initializaing and Unsealing
         if [ ! -f "$VAULT_DATA/init.json" ]; then
             echo "Initializing Vault cluster ${CLUSTER} at ${VAULT_ADDR}, files stored in ${VAULT_DATA}"
-            yapi yapi/vault/01-init.yaml --debug
+            yapi yapi/vault/01-init.yaml 
         fi
 
         vault_unseal
@@ -144,19 +170,19 @@ case "$1" in
         export SECONDARY_HAPROXY_ADDR=$(docker network inspect vault_secondary | jq -r '.[] .Containers | with_entries(select(.value.Name=="haproxy"))| .[] .IPv4Address' | awk -F "/" '{print $1}')
 
         echo "Enabling replication in primary"
-        yapi yapi/vault/03-replication_enable_primary.yaml --debug
+        yapi yapi/vault/03-replication_enable_primary.yaml 
 
         echo "Creating secondary JWT token id=secondary"
-        yapi yapi/vault/04-replication_secondary_token.yaml --debug
+        yapi yapi/vault/04-replication_secondary_token.yaml 
         
         echo "Enabling secondary replication to primary"
         VAULT_TOKEN_SEC=$(cat secondary/${VAULT_DATA}/init.json | jq -r '.root_token')
         VAULT_ADDR=http://127.0.0.1:9301 VAULT_TOKEN=${VAULT_TOKEN_SEC} \
-        yapi yapi/vault/05-replication_activate_secondary.yaml --debug
+        yapi yapi/vault/05-replication_activate_secondary.yaml 
 
         echo "Creating a root token for secondary with the new unseal keys"
         VAULT_ADDR=http://127.0.0.1:9301 VAULT_DATA_KEYS="vault/api" \
-        yapi yapi/vault/06-replication_generate_root_secondary.yaml --debug
+        yapi yapi/vault/06-replication_generate_root_secondary.yaml 
     
     ;;
     "down")
