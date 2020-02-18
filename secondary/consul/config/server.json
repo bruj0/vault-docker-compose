@@ -1,5 +1,5 @@
 {
-    "datacenter": "dc2",
+    "datacenter": "vault-secondary",
     "data_dir": "/consul/data",
     "encrypt": "N2VHEv3OFEU+jx10efNTkOqDUuEj6/14hNLYvcZaGgk=",
     "log_level": "DEBUG",

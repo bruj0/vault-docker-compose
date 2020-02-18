@@ -15,3 +15,5 @@ dr/vault/api/*.json
 vault/logs
 vault/api/*.json
 consul/data
+pki/ca/*.pem
+pki/ca/*.csr

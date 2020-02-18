@@ -11,9 +11,9 @@
 
 listener "tcp" {
   address       = "0.0.0.0:8200"
-  tls_disable  = "true"
-#   #tls_cert_file = "/etc/ssl/certs/vault-server.crt"
-#   #tls_key_file  = "/etc/ssl/vault-server.key"
+  tls_disable  = "false"
+  tls_cert_file = "/vault/ca/primary.pem"
+  tls_key_file  = "/vault/ca/primary-key.pem"
 }
 ui = "true"
 cluster_address = "0.0.0.0:8201"
@@ -29,7 +29,7 @@ storage "consul" {
   path               = "vault/"
 # disable_clustering = "${disable_clustering}"
 # service_tags       = "${service_tags}"
-#  service_address    = "vault01-service"
+  service   	     = "pki"
 }
 
 # -----------------------------------------------------------------------
@@ -46,4 +46,3 @@ telemetry {
   prometheus_retention_time = "30s"
   disable_hostname          = true
 }
-raw_storage_endpoint = true

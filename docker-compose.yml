@@ -38,6 +38,20 @@ services:
         - ./consul/data/consul03:/consul/data
 
 ## VAULT cluster configuration
+  pki: &pki
+    image: vault-prem:1.2.3
+    volumes:
+      - ./pki/ca:/vault/ca
+      - ./pki/config:/vault/config
+      - ./pki/logs/:/vault/logs
+    environment:
+      - VAULT_REDIRECT_INTERFACE=eth0
+      - VAULT_LOG_LEVEL=debug
+    command: vault server -config=/vault/config/vault-pki.hcl
+    cap_add:
+      - IPC_LOCK
+    depends_on:
+      - consul_agent_1
   vault01: &vault_server
     image: vault-prem:1.2.3
     volumes:
