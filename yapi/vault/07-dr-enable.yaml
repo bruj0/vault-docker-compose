@@ -1,0 +1,7 @@
+# $ docker network inspect vault_dr | jq -r '.[] .Containers | with_entries(select(.value.Name=="haproxy"))| .[] .IPv4Address' | awk -F "/" '{print $1}'
+#dr primary) $ vault write -f sys/replication/dr/primary/enable primary_cluster_addr="https://172.18.0.11:9201"
+#dr primary) $ vault write sys/replication/dr/primary/secondary-token id="dr-secondary"
+#dr secondary) $ vault write sys/replication/dr/secondary/enable token="..." primary_api_addr="http://172.18.0.11:9200"
+
+#
+#
