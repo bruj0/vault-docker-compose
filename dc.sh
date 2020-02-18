@@ -130,6 +130,19 @@ case "$1" in
         echo "Waiting for startup"
         sleep ${SLEEP_TIME}
 
+        echo "Starting consul agent 3"
+        ${COMPOSE_CMD} up -d consul_agent_3 ${RECREATE}
+        echo "Waiting for startup"
+        sleep ${SLEEP_TIME}
+
+        echo "Starting consul agent 3"
+        ${COMPOSE_CMD} up -d pki ${RECREATE}
+        echo "Waiting for startup"
+        sleep ${SLEEP_TIME}
+
+        echo "TODO: PKI provisioning"
+        #exit 1
+
         SLEEP_TIME=$(( $SLEEP_TIME + ( $SLEEP_TIME * 2) ))
         echo "Starting Vault server 1"
         ${COMPOSE_CMD} up -d vault01 ${RECREATE}
@@ -205,10 +218,10 @@ case "$1" in
         case "$2" in
             "vault")
                 ${COMPOSE_CMD} restart vault01 vault02 vault03
-                pwd=$(pwd)
-                cd ${ROOT}/yapi/vault
+                #pwd=$(pwd)
+                #cd ${ROOT}/yapi/vault
                 vault_unseal
-                cd ${pwd}
+                #cd ${pwd}
             ;;
             "proxy")
                 cd proxy
