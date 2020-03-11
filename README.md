@@ -1,4 +1,29 @@
-# The What
+- [What](#what)
+- [Why](#why)
+- [How: Requirements](#how-requirements)
+  - [Networks or Regions](#networks-or-regions)
+  - [Communication between them](#communication-between-them)
+  - [Initial configuration](#initial-configuration)
+  - [Install yapi](#install-yapi)
+  - [Start the clusters](#start-the-clusters)
+  - [Start replication](#start-replication)
+  - [Check that replication is up](#check-that-replication-is-up)
+    - [Commands supported](#commands-supported)
+  - [How `dc.sh` works](#how-dcsh-works)
+  - [How to manually configure performance replication](#how-to-manually-configure-performance-replication)
+    - [View the full compose template for a given cluster](#view-the-full-compose-template-for-a-given-cluster)
+    - [Initialization of Vault](#initialization-of-vault)
+    - [Unsealing](#unsealing)
+  - [Troubleshooting](#troubleshooting)
+  - [Useful commands](#useful-commands)
+  - [Exposed ports: local -> container](#exposed-ports-local---container)
+    - [Primary](#primary)
+    - [Secondary (DR primary)](#secondary-dr-primary)
+    - [DR Secondary](#dr-secondary)
+    - [Proxy](#proxy)
+- [TODO](#todo)
+- [Done](#done)
+# What
 A way to create multiple Vault clusters and setup different types of Replication between them as close as possible to the "Vault reference architecture" https://learn.hashicorp.com/vault/operations/ops-reference-architecture
 
 Using the 3 Region setup architecture:
@@ -17,7 +42,7 @@ All regions have a Consul cluster for storage and every Vault node has a `Consul
 # Why 
 To be able to easily setup and test different configuration and features of a full fledge Vault and Consul cluster setup.
 
-# Requirements or the How
+# How: Requirements 
 * Docker 
 * Docker-compose:
   *  Scheduling of containers
@@ -360,13 +385,14 @@ $ docker network inspect vault_${CLUSTER} | jq -r '.[] .Containers | with_entrie
 - 8819 -> 1936 (HAProxy stats)
 
 # TODO
-- [ ] Configure DR cluster
+- [ ] Docker image build documentation
 - [ ] Configure Monitoring
-- [ ] Add Vault container for PKI
 - [ ] Generate PKI certificates and use them
 - [ ] HSM auto unsealing
 
 # Done
+- [X] Add Vault container for PKI
+- [X] Configure DR cluster
 - [x] Initialization and Unsealing with `yapi`
 - [X] Configure primary as Performance replication
 - [X] Create replacement for Tavern
