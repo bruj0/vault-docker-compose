@@ -1,6 +1,7 @@
 - [What](#what)
 - [Why](#why)
-- [How: Requirements](#how-requirements)
+- [How](#how)
+  - [Requirements](#requirements)
   - [Networks or Regions](#networks-or-regions)
   - [Communication between them](#communication-between-them)
   - [Initial configuration](#initial-configuration)
@@ -42,7 +43,9 @@ All regions have a Consul cluster for storage and every Vault node has a `Consul
 # Why 
 To be able to easily setup and test different configuration and features of a full fledge Vault and Consul cluster setup.
 
-# How: Requirements 
+# How 
+
+## Requirements 
 * Docker 
 * Docker-compose:
   *  Scheduling of containers
